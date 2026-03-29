@@ -5,6 +5,8 @@ class QuizView {
     this._nextCallback = null;
     this._answered = false;
 
+    this._copyHelper = null;
+
     // イベント委譲: sectionレベルで一度だけ登録
     this._section.addEventListener('click', (e) => {
       const choiceItem = e.target.closest('.choice-item');
@@ -15,6 +17,11 @@ class QuizView {
       }
       if (e.target.closest('#next-btn')) {
         this._handleNext();
+        return;
+      }
+      const copyBtn = e.target.closest('.copy-btn');
+      if (copyBtn) {
+        this._handleCopy(copyBtn);
         return;
       }
     });
@@ -84,6 +91,10 @@ class QuizView {
     );
   }
 
+  setCopyHelper(copyHelper) {
+    this._copyHelper = copyHelper;
+  }
+
   onAnswer(callback) {
     this._answerCallback = callback;
   }
@@ -103,6 +114,18 @@ class QuizView {
   _handleNext() {
     if (this._nextCallback) {
       this._nextCallback();
+    }
+  }
+
+  async _handleCopy(btn) {
+    if (!this._copyHelper) return;
+    const text = btn.dataset.copyText;
+    const feedback = btn.nextElementSibling;
+    const success = await this._copyHelper.copyToClipboard(text);
+    if (feedback) {
+      feedback.textContent = success ? 'コピーしました' : 'コピーに失敗しました';
+      feedback.classList.add('visible');
+      setTimeout(() => feedback.classList.remove('visible'), 2000);
     }
   }
 

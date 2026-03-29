@@ -2,6 +2,20 @@ class ResultView {
   constructor(section) {
     this._section = section;
     this._backCallback = null;
+    this._copyHelper = null;
+
+    // イベント委譲: コピーボタンとトップに戻るボタン
+    this._section.addEventListener('click', (e) => {
+      const copyBtn = e.target.closest('.copy-btn');
+      if (copyBtn) {
+        this._handleCopy(copyBtn);
+        return;
+      }
+      if (e.target.closest('#back-home-btn')) {
+        this._handleBackToHome();
+        return;
+      }
+    });
   }
 
   render(result) {
@@ -38,7 +52,10 @@ class ResultView {
       <button id="back-home-btn" class="btn btn--block">トップに戻る</button>
     `;
 
-    this._bindEvents();
+  }
+
+  setCopyHelper(copyHelper) {
+    this._copyHelper = copyHelper;
   }
 
   onBackToHome(callback) {
@@ -51,12 +68,15 @@ class ResultView {
     }
   }
 
-  _bindEvents() {
-    const btn = this._section.querySelector('#back-home-btn');
-    if (btn) {
-      btn.addEventListener('click', () => {
-        this._handleBackToHome();
-      });
+  async _handleCopy(btn) {
+    if (!this._copyHelper) return;
+    const text = btn.dataset.copyText;
+    const feedback = btn.nextElementSibling;
+    const success = await this._copyHelper.copyToClipboard(text);
+    if (feedback) {
+      feedback.textContent = success ? 'コピーしました' : 'コピーに失敗しました';
+      feedback.classList.add('visible');
+      setTimeout(() => feedback.classList.remove('visible'), 2000);
     }
   }
 

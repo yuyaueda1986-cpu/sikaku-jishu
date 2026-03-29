@@ -91,6 +91,7 @@ function createMockQuizView() {
     showResult(r) { results.push(r); },
     showExplanation(e) { explanations.push(e); },
     showNextButton(isLast) { nextButtons.push(isLast); },
+    setCopyHelper(h) {},
     onAnswer(cb) { answerCb = cb; },
     onNext(cb) { nextCb = cb; },
     _triggerAnswer(idx) { if (answerCb) answerCb(idx); },
@@ -107,6 +108,7 @@ function createMockResultView() {
   let renderedResult = null;
   return {
     render(result) { renderedResult = result; },
+    setCopyHelper(h) {},
     onBackToHome(cb) { backCb = cb; },
     _triggerBack() { if (backCb) backCb(); },
     _getRenderedResult() { return renderedResult; },

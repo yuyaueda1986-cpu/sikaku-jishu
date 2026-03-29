@@ -19,6 +19,8 @@ class App {
   }
 
   async init() {
+    this._quizView.setCopyHelper(this._copyHelper);
+    this._resultView.setCopyHelper(this._copyHelper);
     this._bindCallbacks();
     this._setupScreenChangeHandler();
     await this._loadAndShowHome();

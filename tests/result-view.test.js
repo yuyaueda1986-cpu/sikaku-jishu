@@ -34,6 +34,8 @@ function createMockSection() {
   let html = '';
   const btnListeners = {};
 
+  const listeners = {};
+
   return {
     id: 'result',
     get innerHTML() { return html; },
@@ -51,6 +53,10 @@ function createMockSection() {
       return null;
     },
     querySelectorAll() { return []; },
+    addEventListener(event, fn) {
+      listeners[event] = listeners[event] || [];
+      listeners[event].push(fn);
+    },
   };
 }
 
