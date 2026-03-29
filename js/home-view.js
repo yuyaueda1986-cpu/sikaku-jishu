@@ -13,11 +13,13 @@ class HomeView {
     ).join('');
 
     this._section.innerHTML = `
-      <h1 class="page-title">電気通信主任技術者 過去問クイズ</h1>
+      <h1 class="page-title">とあるエンジニアの資格自習HP</h1>
       <div class="card">
-        <p>電気通信主任技術者試験の過去問をクイズ形式で学習できます。年度・回次を選択して開始してください。</p>
+        <p>電気通信主任技術者試験の過去問をクイズ形式で学習できるようにする予定。</br>
+           いろいろな試験問題を増やせたら・・・いいなあ。
+        </p>
       </div>
-      <p class="notice">ページをリロードすると進捗がリセットされます。</p>
+      <p class="notice">ページをリロードすると進捗がリセットされる。世の中そういうものだ。</p>
       <ul class="exam-list">
         ${examItems}
       </ul>
