@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>電気通信主任技術者 過去問クイズ</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <section id="home" class="screen active">
+      <!-- HomeView がレンダリング -->
+    </section>
+
+    <section id="setup" class="screen">
+      <!-- SetupView がレンダリング -->
+    </section>
+
+    <section id="quiz" class="screen">
+      <!-- QuizView がレンダリング -->
+    </section>
+
+    <section id="result" class="screen">
+      <!-- ResultView がレンダリング -->
+    </section>
+  </main>
+
+  <script type="module">
+    import { ScreenManager } from './js/screen-manager.js';
+    import { DataLoader } from './js/data-loader.js';
+    import { QuizEngine } from './js/quiz-engine.js';
+    import { CopyHelper } from './js/copy-helper.js';
+    import { HomeView } from './js/home-view.js';
+    import { SetupView } from './js/setup-view.js';
+    import { QuizView } from './js/quiz-view.js';
+    import { ResultView } from './js/result-view.js';
+    import { App } from './js/app.js';
+
+    const app = new App({
+      screenManager: new ScreenManager(document),
+      dataLoader: new DataLoader(),
+      homeView: new HomeView(document.getElementById('home')),
+      setupView: new SetupView(document.getElementById('setup')),
+      quizEngine: new QuizEngine(),
+      quizView: new QuizView(document.getElementById('quiz')),
+      resultView: new ResultView(document.getElementById('result')),
+      copyHelper: new CopyHelper(),
+      win: window,
+    });
+    app.init().catch((err) => {
+      console.error('初期化エラー:', err);
+    });
+  </script>
+</body>
+</html>

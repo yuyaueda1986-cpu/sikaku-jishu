@@ -1,0 +1,394 @@
+/* ===========================
+   ベースリセット & タイポグラフィ
+   =========================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* ===========================
+   画面セクション制御
+   =========================== */
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* ===========================
+   レイアウト（モバイルファースト 375px〜）
+   =========================== */
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ===========================
+   ボタン共通スタイル
+   =========================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.btn:hover {
+  background-color: #1d4ed8;
+}
+
+.btn:active {
+  background-color: #1e40af;
+}
+
+.btn--secondary {
+  background-color: #6b7280;
+}
+
+.btn--secondary:hover {
+  background-color: #4b5563;
+}
+
+.btn--block {
+  display: flex;
+  width: 100%;
+}
+
+/* ===========================
+   選択肢リスト
+   =========================== */
+.choice-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choice-item {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  background-color: #fff;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.choice-item:hover {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+}
+
+.choice-item.selected {
+  border-color: #2563eb;
+  background-color: #dbeafe;
+}
+
+.choice-item.correct {
+  border-color: #16a34a;
+  background-color: #dcfce7;
+}
+
+.choice-item.incorrect {
+  border-color: #dc2626;
+  background-color: #fee2e2;
+}
+
+/* ===========================
+   トグルスイッチ
+   =========================== */
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 8px 0;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background-color: #d1d5db;
+  border-radius: 28px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #2563eb;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(24px);
+}
+
+/* ===========================
+   カード / パネル
+   =========================== */
+.card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ===========================
+   見出し
+   =========================== */
+.page-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* ===========================
+   注意書き
+   =========================== */
+.notice {
+  font-size: 0.875rem;
+  color: #6b7280;
+  padding: 8px 12px;
+  background-color: #fef3c7;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+/* ===========================
+   進捗表示
+   =========================== */
+.progress-bar {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-align: center;
+  padding: 8px 0;
+}
+
+/* ===========================
+   解説エリア
+   =========================== */
+.explanation {
+  padding: 16px;
+  background-color: #f0fdf4;
+  border-left: 4px solid #16a34a;
+  border-radius: 0 8px 8px 0;
+  margin-top: 16px;
+}
+
+.explanation--incorrect {
+  background-color: #fef2f2;
+  border-left-color: #dc2626;
+}
+
+/* ===========================
+   コピーボタン
+   =========================== */
+.copy-area {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.copy-text {
+  font-size: 0.875rem;
+  color: #374151;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin-bottom: 8px;
+}
+
+.copy-feedback {
+  font-size: 0.875rem;
+  color: #16a34a;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.copy-feedback.visible {
+  opacity: 1;
+}
+
+/* ===========================
+   結果サマリー
+   =========================== */
+.result-summary {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.result-score {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.result-percentage {
+  font-size: 1.25rem;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* ===========================
+   試験選択リスト
+   =========================== */
+.exam-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exam-item {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 14px 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  background-color: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.exam-item:hover {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+}
+
+/* ===========================
+   モード選択
+   =========================== */
+.mode-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mode-item {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 14px 16px;
+  font-size: 1rem;
+  background-color: #fff;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.mode-item:hover {
+  border-color: #2563eb;
+}
+
+.mode-item.selected {
+  border-color: #2563eb;
+  background-color: #dbeafe;
+}
+
+/* ===========================
+   エラー表示
+   =========================== */
+.error-message {
+  padding: 12px 16px;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+/* ===========================
+   デスクトップ対応 (768px〜)
+   =========================== */
+@media (min-width: 768px) {
+  main {
+    padding: 32px;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .card {
+    padding: 28px;
+  }
+
+  .result-score {
+    font-size: 2.5rem;
+  }
+}
