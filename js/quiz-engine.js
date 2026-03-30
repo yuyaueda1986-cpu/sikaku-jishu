@@ -91,6 +91,10 @@ class QuizEngine {
     return this._answers[index];
   }
 
+  getCurrentAnswer() {
+    return this._answers[this._currentIndex];
+  }
+
   isComplete() {
     return this._answers.every((a) => a !== null);
   }

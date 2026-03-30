@@ -71,6 +71,7 @@ function createMockQuizEngine() {
       return false;
     },
     getAnswerAt(idx) { return answers[idx]; },
+    getCurrentAnswer() { return answers[questionIdx]; },
     isComplete() { return answers.every(a => a !== null); },
     getResults() {
       return {
@@ -91,7 +92,7 @@ function createMockQuizView() {
   const explanations = [];
   const nextButtons = [];
   return {
-    renderQuestion(q, num) { rendered.push({ q, num }); },
+    renderQuestion(q, num, answerState, mode) { rendered.push({ q, num, answerState, mode }); },
     showResult(r) { results.push(r); },
     showExplanation(e) { explanations.push(e); },
     showNextButton(isLast) { nextButtons.push(isLast); },
@@ -132,6 +133,7 @@ function createMockCopyHelper() {
 
 function createMockWindow() {
   const listeners = {};
+  let confirmResult = true;
   return {
     addEventListener(event, fn) {
       listeners[event] = listeners[event] || [];
@@ -142,7 +144,9 @@ function createMockWindow() {
         listeners[event] = listeners[event].filter(f => f !== fn);
       }
     },
+    confirm() { return confirmResult; },
     _getListeners(event) { return listeners[event] || []; },
+    _setConfirmResult(v) { confirmResult = v; },
   };
 }
 
@@ -251,37 +255,27 @@ describe('App', () => {
       assert.equal(quizView._explanations().length, 1);
     });
 
-    it('回答後に次の問題ボタンが表示される', async () => {
-      await startOneByOne();
-      quizView._triggerAnswer(0);
-      assert.equal(quizView._nextButtons().length, 1);
-      assert.equal(quizView._nextButtons()[0], false); // 最後ではない
-    });
-
     it('次の問題ボタンで次の問題が表示される', async () => {
       await startOneByOne();
       quizView._triggerAnswer(0);
-      quizView._triggerNext();
+      quizView._triggerNext(); // 問題2へ
       assert.equal(quizView._rendered().length, 2);
     });
 
-    it('最後の問題では結果を見るボタンが表示される', async () => {
+    it('最後の問題で次ボタンを押すと確認ダイアログ後に結果画面に遷移する', async () => {
       await startOneByOne();
       quizView._triggerAnswer(0);
       quizView._triggerNext(); // 問題2へ
       quizView._triggerAnswer(2);
-      // 最後の問題なので isLast = true
-      const lastBtn = quizView._nextButtons()[quizView._nextButtons().length - 1];
-      assert.equal(lastBtn, true);
+      quizView._triggerNext(); // 最後の問題 → 確認 → 結果画面へ
+      assert.equal(screenManager.getCurrentScreen(), 'result');
     });
 
-    it('最後の問題の次ボタンで結果画面に遷移する', async () => {
+    it('回答せずに次の問題に移動できる', async () => {
       await startOneByOne();
-      quizView._triggerAnswer(0);
-      quizView._triggerNext(); // 問題2へ
-      quizView._triggerAnswer(2);
-      quizView._triggerNext(); // 結果画面へ
-      assert.equal(screenManager.getCurrentScreen(), 'result');
+      const countBefore = quizView._rendered().length;
+      quizView._triggerNext(); // 回答なしで次へ
+      assert.equal(quizView._rendered().length, countBefore + 1);
     });
   });
 
@@ -293,30 +287,47 @@ describe('App', () => {
       setupView._triggerStart({ mode: 'all-at-once', shuffleQuestions: false, shuffleChoices: false });
     }
 
-    it('回答後に解説は表示されず次の問題が表示される', async () => {
+    it('回答後に解説は表示されない', async () => {
       await startAllAtOnce();
       quizView._triggerAnswer(0);
       assert.equal(quizView._explanations().length, 0);
-      assert.equal(quizView._rendered().length, 2); // 2問目に自動遷移
     });
 
-    it('最後の問題の回答後に結果画面に遷移する', async () => {
+    it('次ボタンで次の問題に移動する', async () => {
       await startAllAtOnce();
-      quizView._triggerAnswer(0); // 問題1回答 → 問題2へ
-      quizView._triggerAnswer(2); // 問題2回答 → 結果へ
+      quizView._triggerAnswer(0);
+      quizView._triggerNext(); // 問題2へ
+      assert.equal(quizView._rendered().length, 2);
+    });
+
+    it('最後の問題で次ボタンを押すと確認ダイアログ後に結果画面に遷移する', async () => {
+      await startAllAtOnce();
+      quizView._triggerAnswer(0);
+      quizView._triggerNext(); // 問題2へ
+      quizView._triggerAnswer(2);
+      quizView._triggerNext(); // 最後の問題 → 確認 → 結果画面へ
       assert.equal(screenManager.getCurrentScreen(), 'result');
     });
 
     it('結果画面に結果データが渡される', async () => {
       await startAllAtOnce();
       quizView._triggerAnswer(0);
+      quizView._triggerNext(); // 問題2へ
       quizView._triggerAnswer(2);
+      quizView._triggerNext(); // 結果画面へ
       assert.ok(resultView._getRenderedResult());
       assert.equal(resultView._getRenderedResult().totalQuestions, 2);
     });
+
+    it('回答せずに次の問題に移動できる', async () => {
+      await startAllAtOnce();
+      const countBefore = quizView._rendered().length;
+      quizView._triggerNext(); // 回答なしで次へ
+      assert.equal(quizView._rendered().length, countBefore + 1);
+    });
   });
 
-  describe('前の問題への移動', () => {
+  describe('前後移動', () => {
     async function startOneByOne() {
       await app.init();
       homeView._triggerSelect(sampleExams[0]);
@@ -326,11 +337,35 @@ describe('App', () => {
 
     it('前の問題ボタンで前の問題が表示される', async () => {
       await startOneByOne();
-      quizView._triggerAnswer(0);
       quizView._triggerNext(); // 問題2へ
       const countBefore = quizView._rendered().length;
       quizView._triggerPrev(); // 問題1に戻る
       assert.equal(quizView._rendered().length, countBefore + 1);
+    });
+
+    it('最初の問題で前ボタンを押すと確認ダイアログ後にTOPに戻る', async () => {
+      await startOneByOne();
+      mockWindow._setConfirmResult(true);
+      quizView._triggerPrev(); // 最初の問題 → 確認 → TOP
+      await new Promise(r => setTimeout(r, 10));
+      assert.equal(screenManager.getCurrentScreen(), 'home');
+    });
+
+    it('最初の問題で前ボタンの確認をキャンセルすると移動しない', async () => {
+      await startOneByOne();
+      mockWindow._setConfirmResult(false);
+      quizView._triggerPrev();
+      assert.equal(screenManager.getCurrentScreen(), 'quiz');
+    });
+
+    it('戻ったときに回答済みの状態が保持される', async () => {
+      await startOneByOne();
+      quizView._triggerAnswer(0); // 問題1に回答
+      quizView._triggerNext(); // 問題2へ
+      quizView._triggerPrev(); // 問題1に戻る
+      const lastRendered = quizView._rendered()[quizView._rendered().length - 1];
+      assert.ok(lastRendered.answerState); // 回答状態が渡されている
+      assert.equal(lastRendered.answerState.selectedIndex, 0);
     });
   });
 
@@ -341,7 +376,9 @@ describe('App', () => {
       await new Promise(r => setTimeout(r, 10));
       setupView._triggerStart({ mode: 'all-at-once', shuffleQuestions: false, shuffleChoices: false });
       quizView._triggerAnswer(0);
+      quizView._triggerNext(); // 問題2へ
       quizView._triggerAnswer(2);
+      quizView._triggerNext(); // 結果画面へ
       resultView._triggerBack();
       await new Promise(r => setTimeout(r, 10));
       assert.equal(screenManager.getCurrentScreen(), 'home');
@@ -364,7 +401,9 @@ describe('App', () => {
       await new Promise(r => setTimeout(r, 10));
       setupView._triggerStart({ mode: 'all-at-once', shuffleQuestions: false, shuffleChoices: false });
       quizView._triggerAnswer(0);
+      quizView._triggerNext(); // 問題2へ
       quizView._triggerAnswer(2);
+      quizView._triggerNext(); // 結果画面へ（確認ダイアログ → OK）
       assert.equal(screenManager.getCurrentScreen(), 'result');
       assert.equal(mockWindow._getListeners('beforeunload').length, 0);
     });

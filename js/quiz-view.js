@@ -32,21 +32,23 @@ class QuizView {
     });
   }
 
-  renderQuestion(question, number) {
+  renderQuestion(question, number, answerState, mode) {
     this._answered = false;
     this._currentQuestion = question;
 
-    const choiceItems = question.choices.map((choice, i) =>
-      `<li class="choice-item" data-index="${i}">${choice}</li>`
-    ).join('');
-
-    const prevDisabled = number.current === 1 ? ' disabled' : '';
+    const choiceItems = question.choices.map((choice, i) => {
+      const classes = ['choice-item'];
+      if (answerState && answerState.selectedIndex === i) {
+        classes.push('selected');
+      }
+      return `<li class="${classes.join(' ')}" data-index="${i}">${choice}</li>`;
+    }).join('');
 
     const figureHtml = question.figure ? this._renderFigure(question.figure) : '';
 
     this._section.innerHTML = `
       <div class="quiz-nav">
-        <button id="prev-btn" class="btn btn--secondary"${prevDisabled}>前の問題</button>
+        <button id="prev-btn" class="btn btn--secondary">前の問題</button>
         <span class="progress-text">問題 ${number.current} / ${number.total}</span>
         <button id="next-btn" class="btn btn--secondary">次の問題</button>
       </div>
@@ -61,6 +63,16 @@ class QuizView {
       <div id="explanation-area"></div>
       <div id="next-area"></div>
     `;
+
+    // 一問一答モード: 回答済みなら結果・解説を表示し、選択肢をロック
+    if (answerState && mode === 'one-by-one') {
+      this._answered = true;
+      this.showResult(answerState);
+      this.showExplanation({
+        text: question.explanation,
+        aiPromptTemplate: question.aiPromptTemplate,
+      });
+    }
 
     if (question.figure && question.figure.type === 'mermaid') {
       if (typeof mermaid !== 'undefined' && mermaid.run) {

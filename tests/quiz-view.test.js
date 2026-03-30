@@ -223,12 +223,13 @@ describe('QuizView', () => {
       assert.ok(section.innerHTML.includes('next-btn'));
     });
 
-    it('先頭問題では前の問題ボタンがdisabledになる', () => {
+    it('先頭問題でも前の問題ボタンが有効である（確認ダイアログでTOPに戻る）', () => {
       const view = new QuizView(section);
       const q = createSampleQuestion();
       view.renderQuestion(q, { current: 1, total: 5 });
       assert.ok(section.innerHTML.includes('prev-btn'));
-      assert.match(section.innerHTML, /prev-btn[^>]*disabled/);
+      const prevBtnMatch = section.innerHTML.match(/id="prev-btn"[^>]*/);
+      assert.ok(prevBtnMatch && !prevBtnMatch[0].includes('disabled'));
     });
 
     it('2問目以降では前の問題ボタンが有効になる', () => {

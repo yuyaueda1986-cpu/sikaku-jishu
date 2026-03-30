@@ -39,9 +39,11 @@ new App(deps)
 
 - **ホーム→設定**: `HomeView.onExamSelect` → `DataLoader.loadExamData` → `SetupView.render` → 画面遷移
 - **設定→クイズ**: `SetupView.onStart` → `QuizEngine.init` → 最初の問題表示 → 画面遷移
-- **一問一答モード回答後**: 正誤表示 → 解説表示 → 次ボタン表示（最後なら「結果を見る」）
-- **全問回答モード回答後**: 自動で次の問題へ（最後なら結果画面へ）
-- **次ボタン**: `QuizEngine.isComplete()` が `true` なら結果画面へ、そうでなければ次の問題を表示
+- **一問一答モード回答後**: 正誤表示 → 解説表示（インデックスは進めない。次ボタンで移動）
+- **全問回答モード回答後**: 回答を記録するだけ（自動遷移なし。次ボタンで移動）
+- **前ボタン（最初の問題）**: 確認ダイアログ → OK でホーム画面へ
+- **次ボタン（最後の問題）**: 確認ダイアログ → OK で結果画面へ
+- **前後ボタン（途中の問題）**: `QuizEngine.prevQuestion/nextQuestion` → 現在の問題を表示（回答済み状態を復元）
 - **結果→ホーム**: `ResultView.onBackToHome` → `DataLoader.loadIndex` → ホーム画面再表示
 
 ### beforeunload 制御
@@ -128,7 +130,10 @@ new QuizEngine()
 | `getQuestionNumber()` | `QuestionNumber` | 現在の問題番号と総数 |
 | `submitAnswer(index)` | `AnswerResult` | 回答を記録し正誤判定結果を返す |
 | `nextQuestion()` | `boolean` | 次の問題に進む。次がある場合 `true`、完了なら `false` |
-| `isComplete()` | `boolean` | 全問完了後 `true` |
+| `prevQuestion()` | `boolean` | 前の問題に戻る。前がある場合 `true`、先頭なら `false` |
+| `getAnswerAt(index)` | `AnswerResult \| null` | 指定インデックスの回答結果を返す（未回答なら `null`） |
+| `getCurrentAnswer()` | `AnswerResult \| null` | 現在の問題の回答結果を返す（未回答なら `null`） |
+| `isComplete()` | `boolean` | 全問回答済みなら `true` |
 | `getResults()` | `QuizResult` | 全回答の集計結果を返す |
 
 ### シャッフルロジック
@@ -214,20 +219,29 @@ new QuizView(section)
 
 | メソッド | 戻り値 | 説明 |
 |---|---|---|
-| `renderQuestion(question, number)` | `void` | 問題文・選択肢・進捗を表示。`_answered` フラグをリセット |
+| `renderQuestion(question, number, answerState, mode)` | `void` | 問題文・選択肢・進捗を表示。`answerState` が渡された場合は選択済み状態を復元 |
 | `showResult(result)` | `void` | 正誤ラベルを表示（一問一答モード用） |
 | `showExplanation(explanation)` | `void` | 解説とAI誘導テキスト・コピーボタンを表示 |
 | `showNextButton(isLast)` | `void` | 次ボタンを表示。`isLast=true` で「結果を見る」 |
 | `onAnswer(callback)` | `void` | 選択肢クリック時コールバック登録。引数: 選択インデックス |
 | `onNext(callback)` | `void` | 次ボタン押下時コールバック登録 |
+| `onPrev(callback)` | `void` | 前ボタン押下時コールバック登録 |
+
+### 回答状態の復元
+
+`renderQuestion` に `answerState`（`AnswerResult | null`）と `mode` を渡すことで、前後移動時の選択済み状態を復元する。
+
+- `answerState` が `null` の場合: 未回答状態で表示
+- `mode === 'one-by-one'` かつ `answerState` あり: 選択肢をハイライトし正誤・解説を表示、選択をロック（`_answered = true`）
+- `mode === 'all-at-once'` かつ `answerState` あり: 選択肢をハイライトのみ（再選択可）
 
 ### 二重回答防止
 
-`_answered` フラグにより、同一問題に対して2回以上のコールバック発火を防止する。
+`_answered` フラグにより、同一問題に対して2回以上のコールバック発火を防止する。一問一答モードで回答済み問題に戻った場合もフラグが設定され選択不可となる。
 
 ### イベント委譲
 
-`section` 要素全体に1つの `click` リスナを登録し、`.choice-item` と `#next-btn` を `closest()` で識別する。innerHTML置換後もリスナは有効。
+`section` 要素全体に1つの `click` リスナを登録し、`.choice-item`・`#next-btn`・`#prev-btn` を `closest()` で識別する。innerHTML置換後もリスナは有効。
 
 ---
 

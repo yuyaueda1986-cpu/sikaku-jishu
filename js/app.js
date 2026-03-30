@@ -54,38 +54,39 @@ class App {
       const result = this._quizEngine.submitAnswer(index);
 
       if (this._currentSettings.mode === 'one-by-one') {
-        // 一問一答: 正誤・解説・次ボタンを表示
+        // 一問一答: 正誤・解説を表示（インデックスは進めない）
         this._quizView.showResult(result);
         const q = this._quizEngine.getCurrentQuestion();
         this._quizView.showExplanation({
           text: q.explanation,
           aiPromptTemplate: q.aiPromptTemplate,
         });
-        const hasNext = this._quizEngine.nextQuestion();
-        this._quizView.showNextButton(!hasNext);
-      } else {
-        // 全問回答: 次の問題に自動進行
-        const hasNext = this._quizEngine.nextQuestion();
-        if (hasNext) {
-          this._showCurrentQuestion();
-        } else {
-          this._showResults();
-        }
       }
+      // 全問回答モード: 回答を記録するだけ（選択状態はsubmitAnswerで保存済み）
     });
 
     // クイズ画面: 前の問題
     this._quizView.onPrev(() => {
-      if (this._quizEngine.prevQuestion()) {
+      const number = this._quizEngine.getQuestionNumber();
+      if (number.current === 1) {
+        if (this._win.confirm('TOPページに戻りますか？')) {
+          this._loadAndShowHome();
+        }
+      } else {
+        this._quizEngine.prevQuestion();
         this._showCurrentQuestion();
       }
     });
 
     // クイズ画面: 次の問題
     this._quizView.onNext(() => {
-      if (this._quizEngine.isComplete()) {
-        this._showResults();
+      const number = this._quizEngine.getQuestionNumber();
+      if (number.current === number.total) {
+        if (this._win.confirm('結果を表示しますか？')) {
+          this._showResults();
+        }
       } else {
+        this._quizEngine.nextQuestion();
         this._showCurrentQuestion();
       }
     });
@@ -99,7 +100,8 @@ class App {
   _showCurrentQuestion() {
     const question = this._quizEngine.getCurrentQuestion();
     const number = this._quizEngine.getQuestionNumber();
-    this._quizView.renderQuestion(question, number);
+    const answerState = this._quizEngine.getCurrentAnswer();
+    this._quizView.renderQuestion(question, number, answerState, this._currentSettings.mode);
   }
 
   _showResults() {
