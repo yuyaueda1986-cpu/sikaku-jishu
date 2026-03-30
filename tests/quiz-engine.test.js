@@ -175,8 +175,6 @@ describe('QuizEngine', () => {
       engine.submitAnswer(2);
       engine.nextQuestion();
       engine.submitAnswer(1);
-      // 最後の問題に回答した後、nextQuestionがfalseを返してもisCompleteはtrue
-      engine.nextQuestion();
       assert.equal(engine.isComplete(), true);
     });
 
@@ -241,6 +239,195 @@ describe('QuizEngine', () => {
       const results = engine.getResults();
       assert.equal(results.correctCount, 0);
       assert.equal(results.percentage, 0);
+    });
+  });
+
+  describe('prevQuestion', () => {
+    it('前の問題に戻れる', () => {
+      const data = createSampleData();
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      engine.submitAnswer(0);
+      engine.nextQuestion();
+      assert.equal(engine.getCurrentQuestion().id, 2);
+      assert.equal(engine.prevQuestion(), true);
+      assert.equal(engine.getCurrentQuestion().id, 1);
+    });
+
+    it('先頭問題ではfalseを返す', () => {
+      const data = createSampleData();
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      assert.equal(engine.prevQuestion(), false);
+      assert.equal(engine.getCurrentQuestion().id, 1);
+    });
+  });
+
+  describe('getAnswerAt', () => {
+    it('回答済みの問題の回答を返す', () => {
+      const data = createSampleData();
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      engine.submitAnswer(0);
+      const answer = engine.getAnswerAt(0);
+      assert.equal(answer.selectedIndex, 0);
+      assert.equal(answer.isCorrect, true);
+    });
+
+    it('未回答の問題ではnullを返す', () => {
+      const data = createSampleData();
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      assert.equal(engine.getAnswerAt(0), null);
+      assert.equal(engine.getAnswerAt(1), null);
+    });
+  });
+
+  describe('submitAnswer（上書き）', () => {
+    it('同じ問題に再回答すると上書きされる', () => {
+      const data = createSampleData();
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      engine.submitAnswer(1); // 不正解
+      assert.equal(engine.getAnswerAt(0).selectedIndex, 1);
+      engine.submitAnswer(0); // 正解に上書き
+      assert.equal(engine.getAnswerAt(0).selectedIndex, 0);
+      assert.equal(engine.getAnswerAt(0).isCorrect, true);
+    });
+  });
+
+  describe('isComplete（全問回答判定）', () => {
+    it('全問回答済みでtrueを返す', () => {
+      const data = createSampleData();
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      engine.submitAnswer(0);
+      engine.nextQuestion();
+      engine.submitAnswer(2);
+      engine.nextQuestion();
+      engine.submitAnswer(1);
+      assert.equal(engine.isComplete(), true);
+    });
+
+    it('未回答がある場合falseを返す', () => {
+      const data = createSampleData();
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      engine.submitAnswer(0);
+      engine.nextQuestion();
+      // 2問目は未回答のまま
+      assert.equal(engine.isComplete(), false);
+    });
+
+    it('前に戻って回答しても正しく判定される', () => {
+      const data = createSampleData();
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      engine.submitAnswer(0);
+      engine.nextQuestion();
+      engine.submitAnswer(2);
+      engine.nextQuestion();
+      // 3問目は未回答
+      assert.equal(engine.isComplete(), false);
+      // 3問目に回答
+      engine.submitAnswer(1);
+      assert.equal(engine.isComplete(), true);
+    });
+  });
+
+  describe('可変選択肢バリデーション', () => {
+    it('選択肢が1個の問題で初期化できる', () => {
+      const data = {
+        year: 2025, round: 1, label: 'テスト',
+        questions: [
+          { id: 1, text: '問題1', choices: ['A'], correctIndex: 0, explanation: '解説', aiPromptTemplate: 'AI' },
+        ],
+      };
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      assert.equal(engine.getCurrentQuestion().choices.length, 1);
+    });
+
+    it('選択肢が16個の問題で初期化できる', () => {
+      const choices = Array.from({ length: 16 }, (_, i) => `選択肢${i + 1}`);
+      const data = {
+        year: 2025, round: 1, label: 'テスト',
+        questions: [
+          { id: 1, text: '問題1', choices, correctIndex: 0, explanation: '解説', aiPromptTemplate: 'AI' },
+        ],
+      };
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      assert.equal(engine.getCurrentQuestion().choices.length, 16);
+    });
+
+    it('選択肢が0個の場合エラーをスローする', () => {
+      const data = {
+        year: 2025, round: 1, label: 'テスト',
+        questions: [
+          { id: 1, text: '問題1', choices: [], correctIndex: 0, explanation: '解説', aiPromptTemplate: 'AI' },
+        ],
+      };
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      assert.throws(() => engine.init(data, settings), /選択肢の数は1〜16/);
+    });
+
+    it('選択肢が17個の場合エラーをスローする', () => {
+      const choices = Array.from({ length: 17 }, (_, i) => `選択肢${i + 1}`);
+      const data = {
+        year: 2025, round: 1, label: 'テスト',
+        questions: [
+          { id: 1, text: '問題1', choices, correctIndex: 0, explanation: '解説', aiPromptTemplate: 'AI' },
+        ],
+      };
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      assert.throws(() => engine.init(data, settings), /選択肢の数は1〜16/);
+    });
+  });
+
+  describe('figureフィールドのディープコピー', () => {
+    it('figureフィールドがある問題をディープコピーする', () => {
+      const data = {
+        year: 2025, round: 1, label: 'テスト',
+        questions: [
+          {
+            id: 1, text: '問題1', choices: ['A', 'B'], correctIndex: 0,
+            explanation: '解説', aiPromptTemplate: 'AI',
+            figure: { type: 'mermaid', content: 'graph TD; A-->B', alt: 'テスト図' },
+          },
+        ],
+      };
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      const q = engine.getCurrentQuestion();
+      assert.deepEqual(q.figure, { type: 'mermaid', content: 'graph TD; A-->B', alt: 'テスト図' });
+      // ディープコピーの確認（元データと異なるオブジェクト参照）
+      assert.notEqual(q.figure, data.questions[0].figure);
+    });
+
+    it('figureフィールドがない問題はundefinedのまま', () => {
+      const data = createSampleData();
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      const q = engine.getCurrentQuestion();
+      assert.equal(q.figure, undefined);
+    });
+
+    it('svg/png型のfigureもディープコピーされる', () => {
+      const data = {
+        year: 2025, round: 1, label: 'テスト',
+        questions: [
+          {
+            id: 1, text: '問題1', choices: ['A', 'B'], correctIndex: 0,
+            explanation: '解説', aiPromptTemplate: 'AI',
+            figure: { type: 'png', src: 'diagram.png', alt: '図1' },
+          },
+        ],
+      };
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      const q = engine.getCurrentQuestion();
+      assert.deepEqual(q.figure, { type: 'png', src: 'diagram.png', alt: '図1' });
     });
   });
 

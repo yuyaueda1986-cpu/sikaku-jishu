@@ -36,7 +36,7 @@ class App {
   _bindCallbacks() {
     // ホーム画面: 試験選択
     this._homeView.onExamSelect(async (exam) => {
-      this._currentExamData = await this._dataLoader.loadExamData(exam.year, exam.round);
+      this._currentExamData = await this._dataLoader.loadExamData(exam.file);
       this._setupView.render(this._currentExamData.label);
       this._screenManager.showScreen('setup');
     });
@@ -71,6 +71,13 @@ class App {
         } else {
           this._showResults();
         }
+      }
+    });
+
+    // クイズ画面: 前の問題
+    this._quizView.onPrev(() => {
+      if (this._quizEngine.prevQuestion()) {
+        this._showCurrentQuestion();
       }
     });
 

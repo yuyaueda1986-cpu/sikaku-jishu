@@ -18,7 +18,7 @@ function createMockDataLoader(exams, examData) {
   return {
     loadIndex: async () => ({ exams }),
     getAvailableExams: () => exams,
-    loadExamData: async (year, round) => examData,
+    loadExamData: async (file) => examData,
   };
 }
 
@@ -51,28 +51,31 @@ function createMockQuizEngine() {
     { id: 1, text: '問題1', choices: ['A', 'B', 'C', 'D'], correctIndex: 0, explanation: '解説1', aiPromptTemplate: 'AI1' },
     { id: 2, text: '問題2', choices: ['A', 'B', 'C', 'D'], correctIndex: 2, explanation: '解説2', aiPromptTemplate: 'AI2' },
   ];
-  let complete = false;
-  const answers = [];
+  let answers;
   return {
-    init(data, settings) { questionIdx = 0; complete = false; answers.length = 0; },
+    init(data, settings) { questionIdx = 0; answers = new Array(questions.length).fill(null); },
     getCurrentQuestion() { return questions[questionIdx]; },
     getQuestionNumber() { return { current: questionIdx + 1, total: questions.length }; },
     submitAnswer(idx) {
       const q = questions[questionIdx];
       const r = { questionId: q.id, selectedIndex: idx, correctIndex: q.correctIndex, isCorrect: idx === q.correctIndex };
-      answers.push(r);
+      answers[questionIdx] = r;
       return r;
     },
     nextQuestion() {
       if (questionIdx < questions.length - 1) { questionIdx++; return true; }
-      complete = true;
       return false;
     },
-    isComplete() { return complete; },
+    prevQuestion() {
+      if (questionIdx > 0) { questionIdx--; return true; }
+      return false;
+    },
+    getAnswerAt(idx) { return answers[idx]; },
+    isComplete() { return answers.every(a => a !== null); },
     getResults() {
       return {
         examLabel: 'テスト', totalQuestions: questions.length,
-        correctCount: answers.filter(a => a.isCorrect).length,
+        correctCount: answers.filter(a => a && a.isCorrect).length,
         percentage: 50, details: answers, questions,
       };
     },
@@ -82,6 +85,7 @@ function createMockQuizEngine() {
 function createMockQuizView() {
   let answerCb = null;
   let nextCb = null;
+  let prevCb = null;
   const rendered = [];
   const results = [];
   const explanations = [];
@@ -94,8 +98,10 @@ function createMockQuizView() {
     setCopyHelper(h) {},
     onAnswer(cb) { answerCb = cb; },
     onNext(cb) { nextCb = cb; },
+    onPrev(cb) { prevCb = cb; },
     _triggerAnswer(idx) { if (answerCb) answerCb(idx); },
     _triggerNext() { if (nextCb) nextCb(); },
+    _triggerPrev() { if (prevCb) prevCb(); },
     _rendered() { return rendered; },
     _results() { return results; },
     _explanations() { return explanations; },
@@ -142,11 +148,11 @@ function createMockWindow() {
 
 // サンプルデータ
 const sampleExams = [
-  { year: 2025, round: 1, label: '2025年度第1回', file: '2025-1.json' },
+  { year: 2025, round: 1, kind: '電気通信主任技術者.法規', label: '2025年度第1回 電気通信主任技術者法規', file: '2025-1.json' },
 ];
 
 const sampleExamData = {
-  year: 2025, round: 1, label: '2025年度第1回',
+  year: 2025, round: 1, kind: '電気通信主任技術者.法規', label: '2025年度第1回 電気通信主任技術者法規',
   questions: [
     { id: 1, text: '問題1', choices: ['A', 'B', 'C', 'D'], correctIndex: 0, explanation: '解説1', aiPromptTemplate: 'AI1' },
     { id: 2, text: '問題2', choices: ['A', 'B', 'C', 'D'], correctIndex: 2, explanation: '解説2', aiPromptTemplate: 'AI2' },
@@ -203,7 +209,7 @@ describe('App', () => {
       await app.init();
       homeView._triggerSelect(sampleExams[0]);
       await new Promise(r => setTimeout(r, 10));
-      assert.equal(setupView._getRenderedLabel(), '2025年度第1回');
+      assert.equal(setupView._getRenderedLabel(), '2025年度第1回 電気通信主任技術者法規');
     });
   });
 
@@ -307,6 +313,24 @@ describe('App', () => {
       quizView._triggerAnswer(2);
       assert.ok(resultView._getRenderedResult());
       assert.equal(resultView._getRenderedResult().totalQuestions, 2);
+    });
+  });
+
+  describe('前の問題への移動', () => {
+    async function startOneByOne() {
+      await app.init();
+      homeView._triggerSelect(sampleExams[0]);
+      await new Promise(r => setTimeout(r, 10));
+      setupView._triggerStart({ mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false });
+    }
+
+    it('前の問題ボタンで前の問題が表示される', async () => {
+      await startOneByOne();
+      quizView._triggerAnswer(0);
+      quizView._triggerNext(); // 問題2へ
+      const countBefore = quizView._rendered().length;
+      quizView._triggerPrev(); // 問題1に戻る
+      assert.equal(quizView._rendered().length, countBefore + 1);
     });
   });
 

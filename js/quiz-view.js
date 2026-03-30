@@ -3,6 +3,7 @@ class QuizView {
     this._section = section;
     this._answerCallback = null;
     this._nextCallback = null;
+    this._prevCallback = null;
     this._answered = false;
 
     this._copyHelper = null;
@@ -17,6 +18,10 @@ class QuizView {
       }
       if (e.target.closest('#next-btn')) {
         this._handleNext();
+        return;
+      }
+      if (e.target.closest('#prev-btn')) {
+        this._handlePrev();
         return;
       }
       const copyBtn = e.target.closest('.copy-btn');
@@ -35,18 +40,33 @@ class QuizView {
       `<li class="choice-item" data-index="${i}">${choice}</li>`
     ).join('');
 
+    const prevDisabled = number.current === 1 ? ' disabled' : '';
+
+    const figureHtml = question.figure ? this._renderFigure(question.figure) : '';
+
     this._section.innerHTML = `
-      <div class="progress-bar">問題 ${number.current} / ${number.total}</div>
+      <div class="quiz-nav">
+        <button id="prev-btn" class="btn btn--secondary"${prevDisabled}>前の問題</button>
+        <span class="progress-text">問題 ${number.current} / ${number.total}</span>
+        <button id="next-btn" class="btn btn--secondary">次の問題</button>
+      </div>
       <div class="card">
         <p class="question-text">${question.text}</p>
       </div>
-      <ul class="choice-list">
+      ${figureHtml}
+      <ul class="choice-list${question.choices.length >= 8 ? ' choice-list--compact' : ''}">
         ${choiceItems}
       </ul>
       <div id="result-area"></div>
       <div id="explanation-area"></div>
       <div id="next-area"></div>
     `;
+
+    if (question.figure && question.figure.type === 'mermaid') {
+      if (typeof mermaid !== 'undefined' && mermaid.run) {
+        mermaid.run({ nodes: this._section.querySelectorAll('.mermaid') });
+      }
+    }
   }
 
   showResult(result) {
@@ -103,6 +123,10 @@ class QuizView {
     this._nextCallback = callback;
   }
 
+  onPrev(callback) {
+    this._prevCallback = callback;
+  }
+
   _handleAnswer(index) {
     if (this._answered) return;
     this._answered = true;
@@ -117,6 +141,12 @@ class QuizView {
     }
   }
 
+  _handlePrev() {
+    if (this._prevCallback) {
+      this._prevCallback();
+    }
+  }
+
   async _handleCopy(btn) {
     if (!this._copyHelper) return;
     const text = btn.dataset.copyText;
@@ -127,6 +157,17 @@ class QuizView {
       feedback.classList.add('visible');
       setTimeout(() => feedback.classList.remove('visible'), 2000);
     }
+  }
+
+  _renderFigure(figure) {
+    const alt = figure.alt || '';
+    let inner;
+    if (figure.type === 'mermaid') {
+      inner = `<pre class="mermaid">${figure.content}</pre>`;
+    } else {
+      inner = `<img src="data/images/${figure.src}" alt="${alt}">`;
+    }
+    return `<div class="question-figure">${inner}</div>`;
   }
 
   _escapeAttr(str) {

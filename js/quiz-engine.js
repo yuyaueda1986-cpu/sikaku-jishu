@@ -5,15 +5,19 @@ class QuizEngine {
     this._examLabel = '';
     this._currentIndex = 0;
     this._answers = [];
-    this._complete = false;
   }
 
   init(data, settings) {
     this._settings = settings;
     this._examLabel = data.label;
     this._currentIndex = 0;
-    this._answers = [];
-    this._complete = false;
+
+    // 選択肢数のバリデーション（1〜16択）
+    for (const q of data.questions) {
+      if (q.choices.length < 1 || q.choices.length > 16) {
+        throw new Error(`問題ID ${q.id}: 選択肢の数は1〜16の範囲で指定してください（現在: ${q.choices.length}）`);
+      }
+    }
 
     // 問題をディープコピー（シャッフルで元データを壊さないため）
     this._questions = data.questions.map((q) => ({
@@ -23,6 +27,7 @@ class QuizEngine {
       correctIndex: q.correctIndex,
       explanation: q.explanation,
       aiPromptTemplate: q.aiPromptTemplate,
+      ...(q.figure ? { figure: { ...q.figure } } : {}),
     }));
 
     // 選択肢ランダム化（出題順シャッフルより先に実行）
@@ -38,6 +43,9 @@ class QuizEngine {
     if (settings.shuffleQuestions) {
       this._shuffle(this._questions);
     }
+
+    // 回答をインデックスベースで管理（上書き可能）
+    this._answers = new Array(this._questions.length).fill(null);
   }
 
   getCurrentQuestion() {
@@ -59,7 +67,7 @@ class QuizEngine {
       correctIndex: q.correctIndex,
       isCorrect: index === q.correctIndex,
     };
-    this._answers.push(result);
+    this._answers[this._currentIndex] = result;
     return result;
   }
 
@@ -68,16 +76,27 @@ class QuizEngine {
       this._currentIndex++;
       return true;
     }
-    this._complete = true;
     return false;
   }
 
+  prevQuestion() {
+    if (this._currentIndex > 0) {
+      this._currentIndex--;
+      return true;
+    }
+    return false;
+  }
+
+  getAnswerAt(index) {
+    return this._answers[index];
+  }
+
   isComplete() {
-    return this._complete;
+    return this._answers.every((a) => a !== null);
   }
 
   getResults() {
-    const correctCount = this._answers.filter((a) => a.isCorrect).length;
+    const correctCount = this._answers.filter((a) => a && a.isCorrect).length;
     const total = this._questions.length;
     return {
       examLabel: this._examLabel,

@@ -213,6 +213,136 @@ describe('QuizView', () => {
     });
   });
 
+  describe('ナビゲーションバー', () => {
+    it('ナビゲーションバーが表示される', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(section.innerHTML.includes('quiz-nav'));
+      assert.ok(section.innerHTML.includes('prev-btn'));
+      assert.ok(section.innerHTML.includes('next-btn'));
+    });
+
+    it('先頭問題では前の問題ボタンがdisabledになる', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(section.innerHTML.includes('prev-btn'));
+      assert.match(section.innerHTML, /prev-btn[^>]*disabled/);
+    });
+
+    it('2問目以降では前の問題ボタンが有効になる', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      view.renderQuestion(q, { current: 2, total: 5 });
+      // disabled属性がないことを確認
+      const prevBtnMatch = section.innerHTML.match(/id="prev-btn"[^>]*/);
+      assert.ok(prevBtnMatch);
+      assert.ok(!prevBtnMatch[0].includes('disabled'));
+    });
+
+    it('進捗テキストが表示される', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      view.renderQuestion(q, { current: 3, total: 10 });
+      assert.ok(section.innerHTML.includes('問題 3 / 10'));
+    });
+  });
+
+  describe('onPrev コールバック', () => {
+    it('onPrev でコールバックが呼ばれる', () => {
+      const view = new QuizView(section);
+      const calls = [];
+      view.onPrev(() => calls.push('prev'));
+      view._handlePrev();
+      assert.deepEqual(calls, ['prev']);
+    });
+  });
+
+  describe('コンパクト表示（8択以上）', () => {
+    it('選択肢が8個以上の場合、choice-list--compactクラスが付与される', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      q.choices = Array.from({ length: 8 }, (_, i) => `選択肢${i + 1}`);
+      view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(section.innerHTML.includes('choice-list--compact'));
+    });
+
+    it('選択肢が7個以下の場合、choice-list--compactクラスが付与されない', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      q.choices = Array.from({ length: 7 }, (_, i) => `選択肢${i + 1}`);
+      view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(!section.innerHTML.includes('choice-list--compact'));
+    });
+
+    it('選択肢が4個の場合、choice-list--compactクラスが付与されない', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(!section.innerHTML.includes('choice-list--compact'));
+    });
+  });
+
+  describe('図表表示（figure）', () => {
+    it('Mermaid図表がpre.mermaidタグで表示される', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      q.figure = { type: 'mermaid', content: 'graph TD; A-->B', alt: 'テスト図' };
+      view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(section.innerHTML.includes('<pre class="mermaid">'));
+      assert.ok(section.innerHTML.includes('graph TD; A-->B'));
+    });
+
+    it('SVG画像がimgタグで表示される', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      q.figure = { type: 'svg', src: 'diagram.svg', alt: 'SVG図' };
+      view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(section.innerHTML.includes('<img'));
+      assert.ok(section.innerHTML.includes('data/images/diagram.svg'));
+      assert.ok(section.innerHTML.includes('alt="SVG図"'));
+    });
+
+    it('PNG画像がimgタグで表示される', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      q.figure = { type: 'png', src: 'photo.png', alt: 'PNG図' };
+      view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(section.innerHTML.includes('<img'));
+      assert.ok(section.innerHTML.includes('data/images/photo.png'));
+      assert.ok(section.innerHTML.includes('alt="PNG図"'));
+    });
+
+    it('figureがない場合は図表エリアが表示されない', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(!section.innerHTML.includes('question-figure'));
+    });
+
+    it('図表は問題文と選択肢の間に表示される', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      q.figure = { type: 'mermaid', content: 'graph LR; X-->Y' };
+      view.renderQuestion(q, { current: 1, total: 5 });
+      const html = section.innerHTML;
+      const questionTextPos = html.indexOf('question-text');
+      const figurePos = html.indexOf('question-figure');
+      const choiceListPos = html.indexOf('choice-list');
+      assert.ok(questionTextPos < figurePos, '図表は問題文の後に表示されるべき');
+      assert.ok(figurePos < choiceListPos, '図表は選択肢の前に表示されるべき');
+    });
+
+    it('alt属性が未指定の場合は空文字になる', () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      q.figure = { type: 'png', src: 'photo.png' };
+      view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(section.innerHTML.includes('alt=""'));
+    });
+  });
+
   describe('次の問題ボタン', () => {
     it('最後の問題では結果を見るボタンが表示される', () => {
       const view = new QuizView(section);

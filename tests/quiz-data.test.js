@@ -23,7 +23,7 @@ describe('data/index.json', () => {
     assert.ok(index.exams.length > 0, '少なくとも1件の試験データが必要');
   });
 
-  it('各エントリが year, round, label, file を持つ', async () => {
+  it('各エントリが year, round, label, file, kind を持つ', async () => {
     const raw = await readFile(join(dataDir, 'index.json'), 'utf-8');
     index = JSON.parse(raw);
     for (const exam of index.exams) {
@@ -32,6 +32,8 @@ describe('data/index.json', () => {
       assert.equal(typeof exam.label, 'string');
       assert.equal(typeof exam.file, 'string');
       assert.match(exam.file, /^\d{4}-\d\.json$/);
+      assert.equal(typeof exam.kind, 'string');
+      assert.match(exam.kind, /^.+\..+$/, 'kindはドット区切り形式であること');
     }
   });
 });
@@ -45,12 +47,14 @@ describe('data/2025-1.json', () => {
     assert.ok(quizData);
   });
 
-  it('year, round, label, questions を持つ', async () => {
+  it('year, round, label, kind, questions を持つ', async () => {
     const raw = await readFile(join(dataDir, '2025-1.json'), 'utf-8');
     quizData = JSON.parse(raw);
     assert.equal(quizData.year, 2025);
     assert.equal(quizData.round, 1);
     assert.equal(typeof quizData.label, 'string');
+    assert.equal(typeof quizData.kind, 'string');
+    assert.match(quizData.kind, /^.+\..+$/, 'kindはドット区切り形式であること');
     assert.ok(Array.isArray(quizData.questions));
     assert.ok(quizData.questions.length >= 5, '5問以上のサンプルデータが必要');
   });
@@ -62,8 +66,8 @@ describe('data/2025-1.json', () => {
       assert.equal(typeof q.id, 'number');
       assert.equal(typeof q.text, 'string');
       assert.ok(Array.isArray(q.choices));
-      assert.ok(q.choices.length >= 4, '選択肢は4つ以上');
-      assert.ok(q.choices.length <= 5, '選択肢は5つ以下');
+      assert.ok(q.choices.length >= 1, '選択肢は1つ以上');
+      assert.ok(q.choices.length <= 16, '選択肢は16以下');
       assert.equal(typeof q.correctIndex, 'number');
       assert.ok(q.correctIndex >= 0 && q.correctIndex < q.choices.length);
       assert.equal(typeof q.explanation, 'string');

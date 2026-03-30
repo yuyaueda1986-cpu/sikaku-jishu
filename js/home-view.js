@@ -9,7 +9,7 @@ class HomeView {
     this._exams = exams;
 
     const examItems = exams.map((exam, i) =>
-      `<li class="exam-item" data-index="${i}">${exam.label}</li>`
+      `<li class="exam-item" data-index="${i}" data-kind="${exam.kind}">${exam.label}</li>`
     ).join('');
 
     this._section.innerHTML = `

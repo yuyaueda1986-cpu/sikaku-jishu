@@ -3,15 +3,16 @@ import assert from 'node:assert/strict';
 
 const mockIndex = {
   exams: [
-    { year: 2025, round: 1, label: '2025年度第1回', file: '2025-1.json' },
-    { year: 2025, round: 2, label: '2025年度第2回', file: '2025-2.json' },
+    { year: 2025, round: 1, kind: '電気通信主任技術者.法規', label: '2025年度第1回 電気通信主任技術者法規', file: '2025-1.json' },
+    { year: 2025, round: 2, kind: '電気通信主任技術者.電気通信システム', label: '2025年度第2回 電気通信主任技術者電気通信システム', file: '2025-2.json' },
   ],
 };
 
 const mockQuizData = {
   year: 2025,
   round: 1,
-  label: '2025年度第1回',
+  kind: '電気通信主任技術者.法規',
+  label: '2025年度第1回 電気通信主任技術者法規',
   questions: [
     {
       id: 1,
@@ -59,7 +60,7 @@ describe('DataLoader', () => {
     await loader.loadIndex();
     const exams = loader.getAvailableExams();
     assert.equal(exams.length, 2);
-    assert.equal(exams[0].label, '2025年度第1回');
+    assert.equal(exams[0].label, '2025年度第1回 電気通信主任技術者法規');
   });
 
   it('loadIndex 前に getAvailableExams は空配列を返す', async () => {
@@ -69,15 +70,16 @@ describe('DataLoader', () => {
     assert.deepEqual(exams, []);
   });
 
-  it('loadExamData でクイズデータを取得できる', async () => {
+  it('loadExamData(file) でクイズデータを取得できる', async () => {
     const fetch = createMockFetch({
       'data/index.json': { ok: true, data: mockIndex },
       'data/2025-1.json': { ok: true, data: mockQuizData },
     });
     const loader = new DataLoader(fetch);
     await loader.loadIndex();
-    const result = await loader.loadExamData(2025, 1);
+    const result = await loader.loadExamData('2025-1.json');
     assert.equal(result.year, 2025);
+    assert.equal(result.kind, '電気通信主任技術者.法規');
     assert.equal(result.questions.length, 1);
   });
 
@@ -89,13 +91,13 @@ describe('DataLoader', () => {
     });
   });
 
-  it('loadExamData で存在しない年度・回次を指定するとエラー', async () => {
+  it('loadExamData で存在しないファイルを指定するとエラー', async () => {
     const fetch = createMockFetch({
       'data/index.json': { ok: true, data: mockIndex },
     });
     const loader = new DataLoader(fetch);
     await loader.loadIndex();
-    await assert.rejects(() => loader.loadExamData(2023, 1), {
+    await assert.rejects(() => loader.loadExamData('nonexistent.json'), {
       message: /見つかりません/,
     });
   });
@@ -106,7 +108,7 @@ describe('DataLoader', () => {
     });
     const loader = new DataLoader(fetch);
     await loader.loadIndex();
-    await assert.rejects(() => loader.loadExamData(2025, 1), {
+    await assert.rejects(() => loader.loadExamData('2025-1.json'), {
       message: /データの読み込みに失敗/,
     });
   });

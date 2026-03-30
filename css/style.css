@@ -131,6 +131,15 @@ main {
 }
 
 /* ===========================
+   選択肢コンパクト表示（8択以上）
+   =========================== */
+.choice-list--compact .choice-item {
+  font-size: 0.875rem;
+  min-height: 36px;
+  padding: 8px 12px;
+}
+
+/* ===========================
    トグルスイッチ
    =========================== */
 .toggle {
@@ -219,6 +228,62 @@ main {
   background-color: #fef3c7;
   border-radius: 6px;
   margin-bottom: 16px;
+}
+
+/* ===========================
+   ナビゲーションバー
+   =========================== */
+.quiz-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  margin-bottom: 8px;
+}
+
+.quiz-nav .progress-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.quiz-nav .btn {
+  font-size: 0.875rem;
+  padding: 8px 16px;
+  min-width: auto;
+}
+
+.quiz-nav .btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===========================
+   図表表示エリア
+   =========================== */
+.question-figure {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.question-figure img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.question-figure .mermaid {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  .question-figure img {
+    max-width: 600px;
+  }
 }
 
 /* ===========================

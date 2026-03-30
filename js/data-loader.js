@@ -18,16 +18,14 @@ class DataLoader {
     return this._index.exams;
   }
 
-  async loadExamData(year, round) {
+  async loadExamData(file) {
     if (!this._index) {
       throw new Error('インデックスが読み込まれていません');
     }
 
-    const entry = this._index.exams.find(
-      (e) => e.year === year && e.round === round
-    );
+    const entry = this._index.exams.find((e) => e.file === file);
     if (!entry) {
-      throw new Error(`${year}年度第${round}回のデータが見つかりません`);
+      throw new Error(`${file} のデータが見つかりません`);
     }
 
     const response = await this._fetch(`data/${entry.file}`);

@@ -39,8 +39,8 @@ describe('HomeView', () => {
   let HomeView, section;
 
   const sampleExams = [
-    { year: 2025, round: 1, label: '2025年度第1回', file: '2025-1.json' },
-    { year: 2024, round: 1, label: '2024年度第1回', file: '2024-1.json' },
+    { year: 2025, round: 1, kind: '電気通信主任技術者.法規', label: '2025年度第1回 電気通信主任技術者法規', file: '2025-1.json' },
+    { year: 2024, round: 1, kind: '電気通信主任技術者.法規', label: '2024年度第1回 電気通信主任技術者法規', file: '2024-1.json' },
   ];
 
   beforeEach(async () => {
@@ -52,13 +52,19 @@ describe('HomeView', () => {
   it('render でサイトタイトルが表示される', () => {
     const view = new HomeView(section);
     view.render(sampleExams);
-    assert.ok(section.innerHTML.includes('電気通信主任技術者 過去問クイズ'));
+    assert.ok(section.innerHTML.includes('資格自習'));
   });
 
   it('render で概要説明が表示される', () => {
     const view = new HomeView(section);
     view.render(sampleExams);
     assert.ok(section.innerHTML.includes('過去問'));
+  });
+
+  it('render でli要素にdata-kind属性が付与される', () => {
+    const view = new HomeView(section);
+    view.render(sampleExams);
+    assert.ok(section.innerHTML.includes('data-kind="電気通信主任技術者.法規"'));
   });
 
   it('render でリロード注意書きが表示される', () => {
@@ -71,8 +77,8 @@ describe('HomeView', () => {
   it('render で年度・回次の一覧が表示される', () => {
     const view = new HomeView(section);
     view.render(sampleExams);
-    assert.ok(section.innerHTML.includes('2025年度第1回'));
-    assert.ok(section.innerHTML.includes('2024年度第1回'));
+    assert.ok(section.innerHTML.includes('2025年度第1回 電気通信主任技術者法規'));
+    assert.ok(section.innerHTML.includes('2024年度第1回 電気通信主任技術者法規'));
   });
 
   it('render で試験数分の選択項目がある', () => {

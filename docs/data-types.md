@@ -24,7 +24,8 @@
 {
   year: number,    // 年度（例: 2025）
   round: number,   // 回次（例: 1）
-  label: string,   // 表示名（例: "2025年度第1回"）
+  kind: string,    // 試験種別（例: "電気通信主任技術者.法規"）
+  label: string,   // 表示名（例: "2025年度第1回 電気通信主任技術者法規"）
   file: string     // データファイル名（例: "2025-1.json"）
 }
 ```
@@ -39,6 +40,7 @@
 {
   year: number,
   round: number,
+  kind: string,       // 試験種別（例: "電気通信主任技術者.法規"）
   label: string,
   questions: Question[]
 }
@@ -54,10 +56,28 @@
 {
   id: number,              // 問題ID（1始まりの連番を推奨）
   text: string,            // 問題文
-  choices: string[],       // 選択肢（4〜5個）
+  choices: string[],       // 選択肢（1〜16個）
   correctIndex: number,    // 正解の選択肢インデックス（0始まり）
-  explanation: string,     // 解説テキスト
-  aiPromptTemplate: string // AI向けプロンプトテキスト
+  explanation: string,      // 解説テキスト
+  aiPromptTemplate: string, // AI向けプロンプトテキスト
+  figure?: QuestionFigure   // 図表（オプショナル）
+}
+```
+
+---
+
+## QuestionFigure
+
+問題に添付する図表。`Question` の `figure` フィールドで使用する（オプショナル）。
+
+```js
+{
+  type: "mermaid" | "svg" | "png",
+  // type === "mermaid" の場合
+  content?: string,   // Mermaid記法テキスト
+  // type === "svg" | "png" の場合
+  src?: string,        // 画像パス（data/images/ 配下のファイル名）
+  alt?: string         // アクセシビリティ用代替テキスト
 }
 ```
 
