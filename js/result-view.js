@@ -21,10 +21,10 @@ class ResultView {
   render(result) {
     const detailsHtml = result.details.map((detail, i) => {
       const q = result.questions[i];
-      const isCorrect = detail.isCorrect;
-      const label = isCorrect ? '正解' : '不正解';
+      const isCorrect = detail ? detail.isCorrect : false;
+      const label = detail ? (isCorrect ? '正解' : '不正解') : '未回答（不正解）';
       const cssClass = isCorrect ? '' : 'explanation--incorrect';
-      const correctChoice = q.choices[detail.correctIndex];
+      const correctChoice = q.choices[detail ? detail.correctIndex : q.correctIndex];
 
       return `
         <div class="card">

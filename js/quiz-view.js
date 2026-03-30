@@ -34,6 +34,7 @@ class QuizView {
 
   renderQuestion(question, number, answerState, mode) {
     this._answered = false;
+    this._mode = mode || 'one-by-one';
     this._currentQuestion = question;
 
     const choiceItems = question.choices.map((choice, i) => {
@@ -140,8 +141,16 @@ class QuizView {
   }
 
   _handleAnswer(index) {
-    if (this._answered) return;
-    this._answered = true;
+    if (this._answered && this._mode === 'one-by-one') return;
+
+    // 選択状態をUIに反映
+    const items = this._section.querySelectorAll('.choice-item');
+    items.forEach((item) => item.classList.remove('selected'));
+    if (items[index]) items[index].classList.add('selected');
+
+    if (this._mode === 'one-by-one') {
+      this._answered = true;
+    }
     if (this._answerCallback) {
       this._answerCallback(index);
     }
