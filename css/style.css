@@ -239,7 +239,19 @@ main {
   justify-content: space-between;
   gap: 8px;
   padding: 8px 0;
-  margin-bottom: 8px;
+}
+
+.quiz-nav--sticky {
+  position: sticky;
+  bottom: 0;
+  background-color: #f5f5f5;
+  padding: 12px 0;
+  border-top: 1px solid #e5e7eb;
+  z-index: 10;
+}
+
+.quiz-body {
+  padding-bottom: 8px;
 }
 
 .quiz-nav .progress-text {
@@ -424,6 +436,22 @@ main {
 .mode-item.selected {
   border-color: #2563eb;
   background-color: #dbeafe;
+}
+
+/* ===========================
+   結果画面フッター
+   =========================== */
+.result-body {
+  padding-bottom: 8px;
+}
+
+.result-footer--sticky {
+  position: sticky;
+  bottom: 0;
+  background-color: #f5f5f5;
+  padding: 12px 0;
+  border-top: 1px solid #e5e7eb;
+  z-index: 10;
 }
 
 /* ===========================

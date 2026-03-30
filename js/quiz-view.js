@@ -48,21 +48,23 @@ class QuizView {
     const figureHtml = question.figure ? this._renderFigure(question.figure) : '';
 
     this._section.innerHTML = `
-      <div class="quiz-nav">
+      <div class="quiz-body">
+        <div class="card">
+          <p class="question-text">${question.text}</p>
+        </div>
+        ${figureHtml}
+        <ul class="choice-list${question.choices.length >= 8 ? ' choice-list--compact' : ''}">
+          ${choiceItems}
+        </ul>
+        <div id="result-area"></div>
+        <div id="explanation-area"></div>
+        <div id="next-area"></div>
+      </div>
+      <div class="quiz-nav quiz-nav--sticky">
         <button id="prev-btn" class="btn btn--secondary">前の問題</button>
         <span class="progress-text">問題 ${number.current} / ${number.total}</span>
         <button id="next-btn" class="btn btn--secondary">次の問題</button>
       </div>
-      <div class="card">
-        <p class="question-text">${question.text}</p>
-      </div>
-      ${figureHtml}
-      <ul class="choice-list${question.choices.length >= 8 ? ' choice-list--compact' : ''}">
-        ${choiceItems}
-      </ul>
-      <div id="result-area"></div>
-      <div id="explanation-area"></div>
-      <div id="next-area"></div>
     `;
 
     // 一問一答モード: 回答済みなら結果・解説を表示し、選択肢をロック

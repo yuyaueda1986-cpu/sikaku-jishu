@@ -43,13 +43,17 @@ class ResultView {
     }).join('');
 
     this._section.innerHTML = `
-      <h1 class="page-title">${result.examLabel} 結果</h1>
-      <div class="result-summary card">
-        <p class="result-score">${result.correctCount} / ${result.totalQuestions}</p>
-        <p class="result-percentage">${result.percentage}%</p>
+      <div class="result-body">
+        <h1 class="page-title">${result.examLabel} 結果</h1>
+        <div class="result-summary card">
+          <p class="result-score">${result.correctCount} / ${result.totalQuestions}</p>
+          <p class="result-percentage">${result.percentage}%</p>
+        </div>
+        ${detailsHtml}
       </div>
-      ${detailsHtml}
-      <button id="back-home-btn" class="btn btn--block">トップに戻る</button>
+      <div class="result-footer result-footer--sticky">
+        <button id="back-home-btn" class="btn btn--block">トップに戻る</button>
+      </div>
     `;
 
   }

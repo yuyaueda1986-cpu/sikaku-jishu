@@ -61,8 +61,19 @@ class App {
           text: q.explanation,
           aiPromptTemplate: q.aiPromptTemplate,
         });
+      } else {
+        // 全問回答モード: 回答後に自動で次の問題へ進む
+        const number = this._quizEngine.getQuestionNumber();
+        if (number.current === number.total) {
+          // 最後の問題 → 確認して結果表示
+          if (this._win.confirm('結果を表示しますか？')) {
+            this._showResults();
+          }
+        } else {
+          this._quizEngine.nextQuestion();
+          this._showCurrentQuestion();
+        }
       }
-      // 全問回答モード: 回答を記録するだけ（選択状態はsubmitAnswerで保存済み）
     });
 
     // クイズ画面: 前の問題
