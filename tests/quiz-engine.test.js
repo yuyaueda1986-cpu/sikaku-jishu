@@ -448,4 +448,68 @@ describe('QuizEngine', () => {
       assert.equal(results.correctCount, 3);
     });
   });
+
+  describe('markdown_text/markdown_fileフィールドのディープコピー', () => {
+    it('markdown_textが存在する問題をコピーする', () => {
+      const data = {
+        year: 2025, round: 1, label: 'テスト',
+        questions: [
+          {
+            id: 1, text: '問題1', choices: ['A', 'B'], correctIndex: 0,
+            explanation: '解説', aiPromptTemplate: 'AI',
+            markdown_text: '## 補足\n本文テキスト',
+          },
+        ],
+      };
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      const q = engine.getCurrentQuestion();
+      assert.equal(q.markdown_text, '## 補足\n本文テキスト');
+    });
+
+    it('markdown_fileが存在する問題をコピーする', () => {
+      const data = {
+        year: 2025, round: 1, label: 'テスト',
+        questions: [
+          {
+            id: 1, text: '問題1', choices: ['A', 'B'], correctIndex: 0,
+            explanation: '解説', aiPromptTemplate: 'AI',
+            markdown_file: 'md/test/sample.md',
+          },
+        ],
+      };
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      const q = engine.getCurrentQuestion();
+      assert.equal(q.markdown_file, 'md/test/sample.md');
+    });
+
+    it('markdown_text/markdown_fileが両方ない問題ではフィールドが含まれない', () => {
+      const data = createSampleData();
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      const q = engine.getCurrentQuestion();
+      assert.equal('markdown_text' in q, false);
+      assert.equal('markdown_file' in q, false);
+    });
+
+    it('markdown_textとmarkdown_fileが両方ある問題を両方コピーする', () => {
+      const data = {
+        year: 2025, round: 1, label: 'テスト',
+        questions: [
+          {
+            id: 1, text: '問題1', choices: ['A', 'B'], correctIndex: 0,
+            explanation: '解説', aiPromptTemplate: 'AI',
+            markdown_text: 'インラインMD',
+            markdown_file: 'md/test/sample.md',
+          },
+        ],
+      };
+      const settings = { mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false };
+      engine.init(data, settings);
+      const q = engine.getCurrentQuestion();
+      assert.equal(q.markdown_text, 'インラインMD');
+      assert.equal(q.markdown_file, 'md/test/sample.md');
+    });
+  });
 });

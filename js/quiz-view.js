@@ -7,6 +7,8 @@ class QuizView {
     this._answered = false;
 
     this._copyHelper = null;
+    this._markdownRenderer = null;
+    this._dataLoader = null;
 
     // イベント委譲: sectionレベルで一度だけ登録
     this._section.addEventListener('click', (e) => {
@@ -32,7 +34,7 @@ class QuizView {
     });
   }
 
-  renderQuestion(question, number, answerState, mode) {
+  async renderQuestion(question, number, answerState, mode) {
     this._answered = false;
     this._mode = mode || 'one-by-one';
     this._currentQuestion = question;
@@ -52,6 +54,7 @@ class QuizView {
         <div class="card">
           <p class="question-text">${question.text}</p>
         </div>
+        <div id="markdown-area" class="markdown-area"></div>
         ${figureHtml}
         <ul class="choice-list${question.choices.length >= 8 ? ' choice-list--compact' : ''}">
           ${choiceItems}
@@ -82,6 +85,44 @@ class QuizView {
         mermaid.run({ nodes: this._section.querySelectorAll('.mermaid') });
       }
     }
+
+    await this._renderMarkdownArea(question);
+  }
+
+  async _renderMarkdownArea(question) {
+    if (!this._markdownRenderer) return;
+
+    const markdownArea = this._section.querySelector('#markdown-area');
+    if (!markdownArea) return;
+
+    let markdownText = null;
+
+    if (question.markdown_file && this._dataLoader) {
+      try {
+        markdownText = await this._dataLoader.loadMarkdownFile(question.markdown_file);
+      } catch (_e) {
+        markdownArea.innerHTML = '<p class="markdown-error">コンテンツの読み込みに失敗しました</p>';
+        return;
+      }
+    } else if (question.markdown_text) {
+      markdownText = question.markdown_text;
+    }
+
+    if (!markdownText) return;
+
+    markdownArea.innerHTML = this._markdownRenderer.render(markdownText);
+
+    // テーブルを横スクロール対応のwrapperでラップ
+    markdownArea.querySelectorAll('table').forEach((table) => {
+      if (!table.parentElement.classList.contains('table-wrapper')) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'table-wrapper';
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+      }
+    });
+
+    await this._markdownRenderer.renderMermaidIn(markdownArea);
   }
 
   showResult(result) {
@@ -124,6 +165,14 @@ class QuizView {
       '<div id="next-area"></div>',
       `<div id="next-area">${btnHtml}</div>`
     );
+  }
+
+  setMarkdownRenderer(renderer) {
+    this._markdownRenderer = renderer;
+  }
+
+  setDataLoader(dataLoader) {
+    this._dataLoader = dataLoader;
   }
 
   setCopyHelper(copyHelper) {

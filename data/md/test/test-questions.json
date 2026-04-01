@@ -1,0 +1,64 @@
+{
+  "year": 9999,
+  "round": 1,
+  "kind": "Markdownテスト",
+  "label": "Markdownレンダリング テスト問題",
+  "questions": [
+    {
+      "id": 1,
+      "text": "【パターンA: markdown_textのみ】オームの法則の式を確認してください。",
+      "markdown_text": "抵抗値は $R = \\frac{V}{I}$ で求められます。\n\n電力は $P = I^2 R$ または $P = \\frac{V^2}{R}$ です。\n\n**重要**: この式はアナログ回路設計の基本です。",
+      "choices": [
+        "R = V × I",
+        "R = V / I",
+        "R = I / V",
+        "R = V + I"
+      ],
+      "correctIndex": 1,
+      "explanation": "オームの法則: R = V / I（抵抗 = 電圧 / 電流）",
+      "aiPromptTemplate": "オームの法則（V=IR）と電力の公式（P=IV, P=I²R, P=V²/R）の関係を解説してください。"
+    },
+    {
+      "id": 2,
+      "text": "【パターンB: markdown_fileのみ】外部Markdownファイルを参照した問題です。以下の説明を読んで答えてください。",
+      "markdown_file": "md/test/sample.md",
+      "choices": [
+        "テーブルが表示されている",
+        "Mermaid図が表示されている",
+        "KaTeX数式が表示されている",
+        "上記すべてが表示されている"
+      ],
+      "correctIndex": 3,
+      "explanation": "サンプルMarkdownファイルにはテーブル・Mermaid図・KaTeX数式・base64画像がすべて含まれています。",
+      "aiPromptTemplate": "GitHub Flavored Markdownで使える主要な記法（テーブル・コードブロック・タスクリスト等）を解説してください。"
+    },
+    {
+      "id": 3,
+      "text": "【パターンC: 両方指定（markdown_file優先）】markdown_textとmarkdown_fileの両方を指定した問題です。",
+      "markdown_text": "このテキストはmarkdown_textです（フォールバック用）。このテキストが表示されている場合は、markdown_file優先の実装が正しく動作していません。",
+      "markdown_file": "md/test/sample.md",
+      "choices": [
+        "markdown_textが表示されている",
+        "markdown_fileの内容が表示されている",
+        "両方が表示されている",
+        "何も表示されていない"
+      ],
+      "correctIndex": 1,
+      "explanation": "markdown_fileとmarkdown_textの両方が指定された場合、markdown_fileが優先されます。",
+      "aiPromptTemplate": "Webアプリケーションでインラインデータとファイル参照を併用する場合のフォールバック設計パターンを解説してください。"
+    },
+    {
+      "id": 4,
+      "text": "【パターンD: 両方未定義（従来動作）】このパターンはmarkdown_textもmarkdown_fileも指定されていません。従来通りの問題表示になります。",
+      "choices": [
+        "Markdownエリアが表示されている",
+        "Markdownエリアが表示されていない（従来と同じ表示）",
+        "エラーが発生した",
+        "ページが崩れた"
+      ],
+      "correctIndex": 1,
+      "explanation": "markdown_textもmarkdown_fileも指定されない場合、Markdownエリアは表示されず、従来と同じ表示になります。",
+      "aiPromptTemplate": "後方互換性を保ちながら新機能を追加するための設計原則について解説してください。"
+    }
+  ]
+}

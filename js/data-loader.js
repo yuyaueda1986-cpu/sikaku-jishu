@@ -18,6 +18,14 @@ class DataLoader {
     return this._index.exams;
   }
 
+  async loadMarkdownFile(filePath) {
+    const response = await this._fetch(`data/${filePath}`);
+    if (!response.ok) {
+      throw new Error(`Markdownファイルの読み込みに失敗しました: ${filePath}`);
+    }
+    return response.text();
+  }
+
   async loadExamData(file) {
     if (!this._index) {
       throw new Error('インデックスが読み込まれていません');

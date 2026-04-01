@@ -112,4 +112,25 @@ describe('DataLoader', () => {
       message: /データの読み込みに失敗/,
     });
   });
+
+  describe('loadMarkdownFile', () => {
+    it('Markdownファイルを取得してテキストを返す', async () => {
+      const mdContent = '# テスト\n\nMarkdownコンテンツ';
+      const mockFetch = async (url) => {
+        if (url === 'data/md/test/sample.md') {
+          return { ok: true, text: async () => mdContent };
+        }
+        return { ok: false, status: 404 };
+      };
+      const loader = new DataLoader(mockFetch);
+      const result = await loader.loadMarkdownFile('md/test/sample.md');
+      assert.equal(result, mdContent);
+    });
+
+    it('fetch失敗時にErrorをthrowする', async () => {
+      const mockFetch = async () => ({ ok: false, status: 404 });
+      const loader = new DataLoader(mockFetch);
+      await assert.rejects(() => loader.loadMarkdownFile('md/notfound.md'), Error);
+    });
+  });
 });

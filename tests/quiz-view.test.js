@@ -27,6 +27,15 @@ function createMockSection() {
   let html = '';
   const listeners = {};
 
+  const markdownArea = (() => {
+    let _html = '';
+    return {
+      get innerHTML() { return _html; },
+      set innerHTML(v) { _html = v; },
+      querySelectorAll() { return []; },
+    };
+  })();
+
   function parseChoiceItems(htmlStr) {
     const items = [];
     const regex = /data-index="(\d+)"/g;
@@ -65,6 +74,9 @@ function createMockSection() {
       return [];
     },
     querySelector(selector) {
+      if (selector === '#markdown-area') {
+        return html.includes('id="markdown-area"') ? markdownArea : null;
+      }
       if (selector === '#next-btn') {
         return {
           style: { display: '' },
@@ -88,6 +100,7 @@ function createMockSection() {
       listeners[event].push(fn);
     },
     _getChoiceItems() { return choiceItems; },
+    _markdownArea: markdownArea,
   };
 }
 
@@ -341,6 +354,124 @@ describe('QuizView', () => {
       q.figure = { type: 'png', src: 'photo.png' };
       view.renderQuestion(q, { current: 1, total: 5 });
       assert.ok(section.innerHTML.includes('alt=""'));
+    });
+  });
+
+  describe('MarkdownRenderer統合', () => {
+    function createMockRenderer() {
+      const calls = [];
+      return {
+        render(text) {
+          calls.push({ type: 'render', text });
+          return `<div class="md">${text}</div>`;
+        },
+        async renderMermaidIn(_container) {
+          calls.push({ type: 'renderMermaidIn' });
+        },
+        _calls: calls,
+      };
+    }
+
+    function createMockLoader(contentOrError) {
+      const calls = [];
+      return {
+        async loadMarkdownFile(path) {
+          calls.push(path);
+          if (contentOrError instanceof Error) throw contentOrError;
+          return contentOrError;
+        },
+        _calls: calls,
+      };
+    }
+
+    it('setMarkdownRendererでレンダラーを設定できる', () => {
+      const view = new QuizView(section);
+      const renderer = createMockRenderer();
+      assert.doesNotThrow(() => view.setMarkdownRenderer(renderer));
+    });
+
+    it('setDataLoaderでデータローダーを設定できる', () => {
+      const view = new QuizView(section);
+      const loader = createMockLoader('# テスト');
+      assert.doesNotThrow(() => view.setDataLoader(loader));
+    });
+
+    it('renderQuestion()でmarkdown-areaのdivが含まれる', async () => {
+      const view = new QuizView(section);
+      const q = createSampleQuestion();
+      await view.renderQuestion(q, { current: 1, total: 5 });
+      assert.ok(section.innerHTML.includes('markdown-area'));
+    });
+
+    it('markdown_textがある場合、MarkdownRendererのrender()が呼ばれる', async () => {
+      const view = new QuizView(section);
+      const renderer = createMockRenderer();
+      view.setMarkdownRenderer(renderer);
+      const q = { ...createSampleQuestion(), markdown_text: '## テスト見出し' };
+      await view.renderQuestion(q, { current: 1, total: 5 });
+      const renderCalls = renderer._calls.filter((c) => c.type === 'render');
+      assert.equal(renderCalls.length, 1);
+      assert.equal(renderCalls[0].text, '## テスト見出し');
+    });
+
+    it('markdown_fileがある場合、DataLoaderのloadMarkdownFile()が呼ばれる', async () => {
+      const view = new QuizView(section);
+      const renderer = createMockRenderer();
+      const loader = createMockLoader('# ファイルMD');
+      view.setMarkdownRenderer(renderer);
+      view.setDataLoader(loader);
+      const q = { ...createSampleQuestion(), markdown_file: 'md/test/sample.md' };
+      await view.renderQuestion(q, { current: 1, total: 5 });
+      assert.deepEqual(loader._calls, ['md/test/sample.md']);
+    });
+
+    it('markdown_fileとmarkdown_textが両方ある場合、markdown_fileを優先する', async () => {
+      const view = new QuizView(section);
+      const renderer = createMockRenderer();
+      const loader = createMockLoader('# ファイルMD');
+      view.setMarkdownRenderer(renderer);
+      view.setDataLoader(loader);
+      const q = { ...createSampleQuestion(), markdown_file: 'md/test.md', markdown_text: 'インラインMD' };
+      await view.renderQuestion(q, { current: 1, total: 5 });
+      const renderCall = renderer._calls.find((c) => c.type === 'render');
+      assert.equal(renderCall.text, '# ファイルMD');
+    });
+
+    it('markdown_text/markdown_fileが両方ない場合、render()は呼ばれない', async () => {
+      const view = new QuizView(section);
+      const renderer = createMockRenderer();
+      view.setMarkdownRenderer(renderer);
+      const q = createSampleQuestion();
+      await view.renderQuestion(q, { current: 1, total: 5 });
+      assert.equal(renderer._calls.filter((c) => c.type === 'render').length, 0);
+    });
+
+    it('markdown_fileのfetchが失敗してもクイズ表示は継続される', async () => {
+      const view = new QuizView(section);
+      const renderer = createMockRenderer();
+      const loader = createMockLoader(new Error('fetch失敗'));
+      view.setMarkdownRenderer(renderer);
+      view.setDataLoader(loader);
+      const q = { ...createSampleQuestion(), markdown_file: 'md/test.md' };
+      await assert.doesNotReject(() => view.renderQuestion(q, { current: 1, total: 5 }));
+      assert.ok(section.innerHTML.includes('問題文テスト'));
+    });
+
+    it('MarkdownRendererが設定されていない場合、markdown_textがあっても何もしない', async () => {
+      const view = new QuizView(section);
+      const q = { ...createSampleQuestion(), markdown_text: '## テスト' };
+      await assert.doesNotReject(() => view.renderQuestion(q, { current: 1, total: 5 }));
+      assert.ok(section.innerHTML.includes('問題文テスト'));
+    });
+
+    it('renderMermaidIn()がmarkdownエリアに対して呼ばれる', async () => {
+      const view = new QuizView(section);
+      const renderer = createMockRenderer();
+      view.setMarkdownRenderer(renderer);
+      const q = { ...createSampleQuestion(), markdown_text: '## テスト' };
+      await view.renderQuestion(q, { current: 1, total: 5 });
+      const mermaidCalls = renderer._calls.filter((c) => c.type === 'renderMermaidIn');
+      assert.equal(mermaidCalls.length, 1);
     });
   });
 

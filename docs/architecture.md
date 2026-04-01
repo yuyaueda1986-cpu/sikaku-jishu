@@ -44,14 +44,17 @@ index.html
 
 ```
 App (エントリーポイント・フロー制御)
-  ├── ScreenManager   画面切り替え
-  ├── DataLoader      JSONデータ読み込み
-  ├── HomeView        ホーム画面UI
-  ├── SetupView       設定画面UI
-  ├── QuizEngine      クイズロジック（コア）
-  ├── QuizView        クイズ画面UI
-  ├── ResultView      結果画面UI
-  └── CopyHelper      クリップボードコピー
+  ├── ScreenManager      画面切り替え
+  ├── DataLoader         JSONデータ読み込み・Markdownファイル取得
+  ├── HomeView           ホーム画面UI
+  ├── SetupView          設定画面UI
+  ├── QuizEngine         クイズロジック（コア）
+  ├── QuizView           クイズ画面UI
+  │     ├── MarkdownRenderer  Markdown→HTML変換・Mermaid後処理
+  │     └── DataLoader        Markdownファイル取得（共有インスタンス）
+  ├── ResultView         結果画面UI
+  ├── CopyHelper         クリップボードコピー
+  └── MarkdownRenderer   Markdown→HTML変換（CDN: marked + KaTeX）
 ```
 
 `App` がすべてのコンポーネントを **依存性注入** で受け取るため、各コンポーネントは独立してテスト可能。
@@ -74,10 +77,13 @@ App (エントリーポイント・フロー制御)
 │   ├── setup-view.js       # SetupView
 │   ├── quiz-view.js        # QuizView
 │   ├── result-view.js      # ResultView
-│   └── copy-helper.js      # CopyHelper
+│   ├── copy-helper.js      # CopyHelper
+│   └── markdown-renderer.js # MarkdownRenderer（GFM/KaTeX/Mermaid）
 ├── data/
 │   ├── index.json          # 試験一覧インデックス
-│   └── 2025-1.json         # 試験ごとのクイズデータ
+│   ├── 2025-1.json         # 試験ごとのクイズデータ
+│   ├── images/             # 問題の図表用画像ファイル
+│   └── md/                 # 問題補足用Markdownファイル（markdown_file 参照先）
 ├── docs/                   # ドキュメント（このフォルダ）
 └── tests/                  # Node.js テストファイル
 ```
@@ -88,11 +94,11 @@ App (エントリーポイント・フロー制御)
 
 | 方針 | 内容 |
 |---|---|
-| ゼロ依存 | 外部ライブラリ・フレームワーク不使用 |
+| CDN限定依存 | 追加ライブラリはCDN経由のみ（marked / KaTeX / Mermaid）。ビルドステップ不要 |
 | ビルドレス | npm build 不要、ファイルをそのままデプロイ |
 | モバイルファースト | スマホ（375px〜）を基準にUI設計 |
 | 静的完結 | 全ロジックをクライアントサイドで完結 |
-| データ分離 | クイズコンテンツはJSONファイルに外出し |
+| データ分離 | クイズコンテンツはJSONファイルに外出し。補足コンテンツはMarkdownファイルに外出し |
 
 ---
 
@@ -100,11 +106,29 @@ App (エントリーポイント・フロー制御)
 
 ブラウザでは ES Modules（`type="module"`）を使用。`index.html` のインラインスクリプトがすべてのクラスをインポートし `App` を初期化する。
 
+CDNライブラリ（marked・KaTeX・Mermaid）は `<script type="importmap">` でESMパスをマッピングし、動的 `import()` で読み込む。CDN読み込み失敗時もアプリは起動する（Markdownレンダリング機能のみ無効化）。
+
 ```html
+<script type="importmap">
+{
+  "imports": {
+    "marked": "https://cdn.jsdelivr.net/npm/marked@17/lib/marked.esm.js",
+    "marked-katex-extension": "https://cdn.jsdelivr.net/npm/marked-katex-extension/+esm"
+  }
+}
+</script>
 <script type="module">
-  import { ScreenManager } from './js/screen-manager.js';
-  // ... 他コンポーネントのインポート
-  const app = new App({ screenManager, ... });
+  import { MarkdownRenderer } from './js/markdown-renderer.js';
+  // CDN読み込み失敗時でもアプリが起動するよう try/catch で動的import
+  let markdownRenderer;
+  try {
+    const { marked } = await import('marked');
+    const { default: markedKatex } = await import('marked-katex-extension');
+    markdownRenderer = new MarkdownRenderer({ markedLib: marked, markedKatexLib: markedKatex });
+  } catch (_e) {
+    markdownRenderer = new MarkdownRenderer(); // Markdownなしでフォールバック
+  }
+  const app = new App({ ..., markdownRenderer });
   app.init();
 </script>
 ```

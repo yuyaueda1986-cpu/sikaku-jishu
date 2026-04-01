@@ -3,6 +3,7 @@
     { "year": 2025, "round": 1, "kind": "電気通信主任技術者.サンプル", "label": "電気通信主任技術者サンプル", "file": "2025-1.json" },
     { "year": 2025, "round": 2, "kind": "電気通信主任技術者.電気通信システム", "label": "2025年度第2回 電気通信主任技術者 電気通信システム", "file": "2025-2-system.json" },
     { "year": 2025, "round": 2, "kind": "電気通信主任技術者.法規", "label": "2025年度第2回 電気通信主任技術者 法規", "file": "2025-2-law.json" },
-    { "year": 2025, "round": 2, "kind": "電気通信主任技術者.伝送交換設備及び設備管理", "label": "2025年度第2回 電気通信主任技術者 伝送交換設備及び設備管理", "file": "2025-2-equipment.json" }
+    { "year": 2025, "round": 2, "kind": "電気通信主任技術者.伝送交換設備及び設備管理", "label": "2025年度第2回 電気通信主任技術者 伝送交換設備及び設備管理", "file": "2025-2-equipment.json" },
+    { "year": 9999, "round": 1, "kind": "Markdownテスト", "label": "【開発用】Markdownレンダリング テスト", "file": "md/test/test-questions.json" }
   ]
 }

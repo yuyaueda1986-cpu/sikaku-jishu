@@ -97,6 +97,8 @@ function createMockQuizView() {
     showExplanation(e) { explanations.push(e); },
     showNextButton(isLast) { nextButtons.push(isLast); },
     setCopyHelper(h) {},
+    setMarkdownRenderer(r) {},
+    setDataLoader(l) {},
     onAnswer(cb) { answerCb = cb; },
     onNext(cb) { nextCb = cb; },
     onPrev(cb) { prevCb = cb; },
@@ -223,6 +225,7 @@ describe('App', () => {
       homeView._triggerSelect(sampleExams[0]);
       await new Promise(r => setTimeout(r, 10));
       setupView._triggerStart({ mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false });
+      await new Promise(r => setTimeout(r, 10));
       assert.equal(screenManager.getCurrentScreen(), 'quiz');
     });
 
@@ -333,6 +336,7 @@ describe('App', () => {
       homeView._triggerSelect(sampleExams[0]);
       await new Promise(r => setTimeout(r, 10));
       setupView._triggerStart({ mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false });
+      await new Promise(r => setTimeout(r, 10));
     }
 
     it('前の問題ボタンで前の問題が表示される', async () => {
@@ -375,6 +379,7 @@ describe('App', () => {
       homeView._triggerSelect(sampleExams[0]);
       await new Promise(r => setTimeout(r, 10));
       setupView._triggerStart({ mode: 'all-at-once', shuffleQuestions: false, shuffleChoices: false });
+      await new Promise(r => setTimeout(r, 10));
       quizView._triggerAnswer(0);
       quizView._triggerNext(); // 問題2へ
       quizView._triggerAnswer(2);
@@ -391,6 +396,7 @@ describe('App', () => {
       homeView._triggerSelect(sampleExams[0]);
       await new Promise(r => setTimeout(r, 10));
       setupView._triggerStart({ mode: 'one-by-one', shuffleQuestions: false, shuffleChoices: false });
+      await new Promise(r => setTimeout(r, 10));
       assert.equal(screenManager.getCurrentScreen(), 'quiz');
       assert.ok(mockWindow._getListeners('beforeunload').length > 0);
     });

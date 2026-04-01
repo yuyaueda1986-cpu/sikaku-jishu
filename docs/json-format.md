@@ -8,10 +8,14 @@
 
 ```
 data/
-├── index.json       ← 試験一覧（必須、1ファイルのみ）
-├── 2025-1.json      ← 2025年度第1回の問題データ
-├── 2025-2.json      ← 2025年度第2回の問題データ
-└── 2024-1.json      ← 2024年度第1回の問題データ（以下同様）
+├── index.json           ← 試験一覧（必須、1ファイルのみ）
+├── 2025-1.json          ← 2025年度第1回の問題データ
+├── 2025-2.json          ← 2025年度第2回の問題データ
+├── 2024-1.json          ← 2024年度第1回の問題データ（以下同様）
+├── images/              ← 問題の図表用画像ファイル
+└── md/                  ← 問題補足用Markdownファイル（markdown_file で参照）
+    └── 2025-2-law/
+        └── q2.md        ← 例: 2025年第2回法規 第2問の補足Markdown
 ```
 
 ---
@@ -114,11 +118,24 @@ data/
 |---|---|---|---|
 | `id` | 整数 | ✓ | 問題ID（1始まりの連番を推奨） |
 | `text` | 文字列 | ✓ | 問題文 |
+| `markdown_text` | 文字列 | | 補足Markdown（インライン。KaTeX数式・強調等の短い内容向け） |
+| `markdown_file` | 文字列 | | 補足Markdownの外部ファイルパス（`data/` からの相対パス。テーブル・Mermaid図・画像等の複雑なコンテンツ向け） |
 | `choices` | 文字列配列 | ✓ | 選択肢（1〜16個） |
 | `correctIndex` | 整数 | ✓ | 正解の選択肢インデックス（0始まり） |
 | `explanation` | 文字列 | ✓ | 解説テキスト |
 | `aiPromptTemplate` | 文字列 | ✓ | AI向けプロンプトテキスト |
 | `figure` | オブジェクト | | 図表情報（省略可） |
+
+**`markdown_text` と `markdown_file` の使い分け**:
+- 両方省略: 従来通り `text` と `choices` のみ表示（後方互換）
+- 両方指定: `markdown_file` が優先される（`markdown_text` は無視）
+- レンダリング位置: 問題文（`text`）カードの直下・選択肢の上に表示
+
+**Markdownレンダリング対応要素**:
+- GFM（テーブル・箇条書き・コードブロック・強調 等）
+- KaTeX数式: インライン `$...$`、ブロック `$$...$$`
+- Mermaid図: ` ```mermaid ``` ` コードブロック
+- base64埋め込み画像: `![alt](data:image/png;base64,...)`
 
 ### figure オブジェクトのフィールド
 
@@ -228,6 +245,25 @@ AI解説誘導テキストはユーザーがコピーして ChatGPT 等に貼り
 
 3. ブラウザでリロードし、ホーム画面に新しい試験が表示されることを確認する
 
+### Markdownファイルを使う場合の追加手順
+
+1. `data/md/` 配下に任意のディレクトリ構造でMarkdownファイルを配置する
+2. 問題JSONの `markdown_file` フィールドに `data/` からの相対パスを記載する
+
+```json
+{
+  "id": 2,
+  "text": "次の図を参照して答えよ。",
+  "markdown_file": "md/2026-1-law/q2.md",
+  "choices": ["選択肢A", "選択肢B"],
+  "correctIndex": 0,
+  "explanation": "解説テキスト",
+  "aiPromptTemplate": "AIプロンプトテキスト"
+}
+```
+
+3. Markdownファイルのパスは `data/` を起点とした相対パスで記載すること（`data/` は含めない）
+
 ---
 
 ## 6. バリデーションチェックリスト
@@ -240,6 +276,8 @@ AI解説誘導テキストはユーザーがコピーして ChatGPT 等に貼り
 - [ ] `index.json` の `file` と実際のファイル名が一致しているか
 - [ ] JSONとして構文エラーがないか（ブラウザの開発者ツールで確認）
 - [ ] `aiPromptTemplate` が空でないか
+- [ ] `markdown_file` を指定した場合、`data/md/...` にファイルが存在するか
+- [ ] Markdownファイルの構文が正しいか（KaTeX数式の `$` 対応、Mermaid構文等）
 
 ---
 
@@ -251,3 +289,5 @@ AI解説誘導テキストはユーザーがコピーして ChatGPT 等に貼り
 | `correctIndex` の範囲外 | ランダム化時に正解がずれる | `choices` の配列長を確認し修正 |
 | JSONの末尾カンマ | データ読み込みエラー | 最後の要素の後ろにカンマをつけない |
 | ファイル名のtypo | データ読み込みエラー | `index.json` の `file` 名とファイル名を照合 |
+| `markdown_file` のパスが `data/` を含む | Markdownが読み込めない | `data/` を除いたパスで記載する（例: `md/foo/bar.md`） |
+| `aiPromptTemplate` が未定義 | 結果画面でエラー発生・先に進めない | 全問題に `aiPromptTemplate` を必ず記載する |

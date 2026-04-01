@@ -54,15 +54,19 @@
 
 ```js
 {
-  id: number,              // 問題ID（1始まりの連番を推奨）
-  text: string,            // 問題文
-  choices: string[],       // 選択肢（1〜16個）
-  correctIndex: number,    // 正解の選択肢インデックス（0始まり）
-  explanation: string,      // 解説テキスト
-  aiPromptTemplate: string, // AI向けプロンプトテキスト
-  figure?: QuestionFigure   // 図表（オプショナル）
+  id: number,                // 問題ID（1始まりの連番を推奨）
+  text: string,              // 問題文
+  markdown_text?: string,    // 問題文の補足Markdown（インライン文字列、オプショナル）
+  markdown_file?: string,    // 補足Markdownの外部ファイルパス（data/ からの相対パス、オプショナル）
+  choices: string[],         // 選択肢（1〜16個）
+  correctIndex: number,      // 正解の選択肢インデックス（0始まり）
+  explanation: string,       // 解説テキスト
+  aiPromptTemplate: string,  // AI向けプロンプトテキスト
+  figure?: QuestionFigure    // 図表（オプショナル）
 }
 ```
+
+**`markdown_text` と `markdown_file` の優先順位**: 両方指定された場合は `markdown_file` が優先される。レンダリングは問題文（`text`）と選択肢（`choices`）の間に表示される。
 
 ---
 

@@ -30,6 +30,7 @@ node --test tests/quiz-engine.test.js
 | `tests/copy-helper.test.js` | CopyHelper | - |
 | `tests/result-view.test.js` | ResultView | - |
 | `tests/app.test.js` | App（統合） | - |
+| `tests/markdown-renderer.test.js` | MarkdownRenderer | - |
 
 ---
 

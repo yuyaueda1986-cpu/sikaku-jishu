@@ -27,6 +27,7 @@ new App(deps)
 | `quizView` | QuizView | クイズ画面UI |
 | `resultView` | ResultView | 結果画面UI |
 | `copyHelper` | CopyHelper | コピー機能 |
+| `markdownRenderer` | MarkdownRenderer | Markdown変換（省略時は `null`、Markdownレンダリング無効） |
 | `win` | Window | `beforeunload` 登録先（省略時は `window`） |
 
 ### メソッド
@@ -101,12 +102,14 @@ new DataLoader(fetchFn?)
 |---|---|---|
 | `loadIndex()` | `Promise<ExamIndex>` | `data/index.json` を読み込み内部キャッシュに保存 |
 | `getAvailableExams()` | `ExamEntry[]` | キャッシュ済みインデックスから試験一覧を返す |
-| `loadExamData(year, round)` | `Promise<QuizData>` | 指定年度・回次のJSONを読み込む |
+| `loadExamData(file)` | `Promise<QuizData>` | 指定ファイル名のJSONを読み込む |
+| `loadMarkdownFile(filePath)` | `Promise<string>` | `data/${filePath}` のMarkdownファイルをテキストとして取得する |
 
 ### エラー処理
 
 - HTTPステータスが `ok` でない場合は `Error` をスロー
 - `loadIndex()` 未実行で `loadExamData()` を呼ぶとエラー
+- `loadMarkdownFile()` でファイルが存在しない場合は `Error` をスロー（QuizView で捕捉しエラーメッセージを表示）
 
 ---
 
@@ -219,10 +222,12 @@ new QuizView(section)
 
 | メソッド | 戻り値 | 説明 |
 |---|---|---|
-| `renderQuestion(question, number, answerState, mode)` | `void` | 問題文・選択肢・進捗を表示。`answerState` が渡された場合は選択済み状態を復元 |
+| `renderQuestion(question, number, answerState, mode)` | `Promise<void>` | 問題文・選択肢・進捗を表示。Markdownエリアの非同期レンダリングを含む |
 | `showResult(result)` | `void` | 正誤ラベルを表示（一問一答モード用） |
 | `showExplanation(explanation)` | `void` | 解説とAI誘導テキスト・コピーボタンを表示 |
 | `showNextButton(isLast)` | `void` | 次ボタンを表示。`isLast=true` で「結果を見る」 |
+| `setMarkdownRenderer(renderer)` | `void` | MarkdownRenderer を注入する |
+| `setDataLoader(dataLoader)` | `void` | DataLoader を注入する（markdown_file 取得用） |
 | `onAnswer(callback)` | `void` | 選択肢クリック時コールバック登録。引数: 選択インデックス |
 | `onNext(callback)` | `void` | 次ボタン押下時コールバック登録 |
 | `onPrev(callback)` | `void` | 前ボタン押下時コールバック登録 |
@@ -269,6 +274,57 @@ new ResultView(section)
 
 - 試験ラベル・正答数/総問題数・正答率（%）
 - 各問題ごと: 正誤・正解の選択肢テキスト・解説・AI誘導テキスト・コピーボタン
+
+---
+
+## MarkdownRenderer
+
+**ファイル**: `js/markdown-renderer.js`
+**責務**: GFMテキストをサニタイズ済みHTMLに変換する。KaTeX数式統合・Mermaid後処理を提供する。
+
+### コンストラクタ
+
+```js
+new MarkdownRenderer(deps?)
+```
+
+| フィールド | 型 | 説明 |
+|---|---|---|
+| `deps.markedLib` | object | markedライブラリオブジェクト（named export `{ marked }`） |
+| `deps.markedKatexLib` | Function | marked-katex-extensionファクトリ関数（default export） |
+
+`deps` を省略またはライブラリが渡されない場合、`render()` は入力テキストをそのまま返す（フォールバック）。
+
+### メソッド
+
+| メソッド | 戻り値 | 説明 |
+|---|---|---|
+| `render(markdownText)` | `string` | GFM文字列をHTMLに変換。`<script>` タグを除去してXSS対策済み |
+| `renderMermaidIn(container)` | `Promise<void>` | DOM要素内の ` ```mermaid ``` ` ブロックをMermaid図に変換する |
+
+### レンダリング仕様
+
+- **GFM**: marked v17 で処理（テーブル・コードブロック・強調 等）
+- **KaTeX**: `$...$`（インライン）と `$$...$$`（ブロック）を変換。`throwOnError: false` でエラー時はソーステキストを表示
+- **Mermaid**: `renderMermaidIn()` でグローバルの `mermaid` オブジェクトを使用。未読み込み・エラー時は何もしない
+- **XSS対策**: `<script>` タグを正規表現で除去
+
+### CDN読み込みの注意
+
+importmap でのライブラリ解決が必要:
+
+```html
+<script type="importmap">
+{
+  "imports": {
+    "marked": "https://cdn.jsdelivr.net/npm/marked@17/lib/marked.esm.js",
+    "marked-katex-extension": "https://cdn.jsdelivr.net/npm/marked-katex-extension/+esm"
+  }
+}
+</script>
+```
+
+`marked` は **named export** なので `import { marked } from 'marked'`、`marked-katex-extension` は **default export** なので `import markedKatex from 'marked-katex-extension'` で取得する。
 
 ---
 

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>自習サイト</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
 </head>
 <body>
   <main>
@@ -25,7 +26,16 @@
     </section>
   </main>
 
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "marked": "https://cdn.jsdelivr.net/npm/marked@17/lib/marked.esm.js",
+      "marked-katex-extension": "https://cdn.jsdelivr.net/npm/marked-katex-extension/+esm"
+    }
+  }
+  </script>
   <script type="module">
     import { ScreenManager } from './js/screen-manager.js';
     import { DataLoader } from './js/data-loader.js';
@@ -36,6 +46,16 @@
     import { QuizView } from './js/quiz-view.js';
     import { ResultView } from './js/result-view.js';
     import { App } from './js/app.js';
+    import { MarkdownRenderer } from './js/markdown-renderer.js';
+
+    let markdownRenderer;
+    try {
+      const { marked } = await import('marked');
+      const { default: markedKatexExtension } = await import('marked-katex-extension');
+      markdownRenderer = new MarkdownRenderer({ markedLib: marked, markedKatexLib: markedKatexExtension });
+    } catch (_e) {
+      markdownRenderer = new MarkdownRenderer();
+    }
 
     const app = new App({
       screenManager: new ScreenManager(document),
@@ -46,6 +66,7 @@
       quizView: new QuizView(document.getElementById('quiz')),
       resultView: new ResultView(document.getElementById('result')),
       copyHelper: new CopyHelper(),
+      markdownRenderer,
       win: window,
     });
     app.init().catch((err) => {

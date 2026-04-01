@@ -28,6 +28,8 @@ class QuizEngine {
       explanation: q.explanation,
       aiPromptTemplate: q.aiPromptTemplate,
       ...(q.figure ? { figure: { ...q.figure } } : {}),
+      ...(q.markdown_text ? { markdown_text: q.markdown_text } : {}),
+      ...(q.markdown_file ? { markdown_file: q.markdown_file } : {}),
     }));
 
     // 選択肢ランダム化（出題順シャッフルより先に実行）

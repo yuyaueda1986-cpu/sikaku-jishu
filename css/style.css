@@ -455,6 +455,153 @@ main {
 }
 
 /* ===========================
+   Markdownエリア
+   =========================== */
+.markdown-area {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.markdown-area h1,
+.markdown-area h2,
+.markdown-area h3,
+.markdown-area h4,
+.markdown-area h5,
+.markdown-area h6 {
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  color: #1f2937;
+}
+
+.markdown-area h1 { font-size: 1.25rem; }
+.markdown-area h2 { font-size: 1.125rem; }
+.markdown-area h3 { font-size: 1rem; }
+.markdown-area h4,
+.markdown-area h5,
+.markdown-area h6 { font-size: 0.9375rem; }
+
+.markdown-area ul,
+.markdown-area ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.markdown-area ul { list-style: disc; }
+.markdown-area ol { list-style: decimal; }
+
+.markdown-area li {
+  margin-bottom: 0.25em;
+}
+
+.markdown-area strong {
+  font-weight: 700;
+  color: #111827;
+}
+
+.markdown-area em {
+  font-style: italic;
+}
+
+.markdown-area code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.875em;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+}
+
+/* テーブル */
+.markdown-area .table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 0.75em;
+  -webkit-overflow-scrolling: touch;
+}
+
+.markdown-area table {
+  border-collapse: collapse;
+  min-width: 100%;
+  font-size: 0.875rem;
+}
+
+.markdown-area th,
+.markdown-area td {
+  border: 1px solid #d1d5db;
+  padding: 8px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.markdown-area th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.markdown-area tr:nth-child(even) td {
+  background-color: #f9fafb;
+}
+
+/* 画像 */
+.markdown-area img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  display: block;
+  margin: 0.5em auto;
+}
+
+/* コードブロック・Mermaid */
+.markdown-area pre {
+  overflow-x: auto;
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 0.75em;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  -webkit-overflow-scrolling: touch;
+}
+
+.markdown-area pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+.markdown-area .mermaid {
+  overflow-x: auto;
+  text-align: center;
+  margin-bottom: 0.75em;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* KaTeX ブロック数式 */
+.markdown-area .katex-display {
+  overflow-x: auto;
+  text-align: center;
+  margin: 0.75em 0;
+  padding: 0.5em 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* エラー表示 */
+.markdown-area .markdown-error {
+  font-size: 0.875rem;
+  color: #dc2626;
+  padding: 8px 12px;
+  background-color: #fef2f2;
+  border-radius: 6px;
+}
+
+/* ===========================
    エラー表示
    =========================== */
 .error-message {

@@ -8,6 +8,7 @@ class App {
     this._quizView = deps.quizView;
     this._resultView = deps.resultView;
     this._copyHelper = deps.copyHelper;
+    this._markdownRenderer = deps.markdownRenderer ?? null;
     this._win = deps.win || window;
 
     this._currentExamData = null;
@@ -20,6 +21,8 @@ class App {
 
   async init() {
     this._quizView.setCopyHelper(this._copyHelper);
+    this._quizView.setMarkdownRenderer(this._markdownRenderer);
+    this._quizView.setDataLoader(this._dataLoader);
     this._resultView.setCopyHelper(this._copyHelper);
     this._bindCallbacks();
     this._setupScreenChangeHandler();
@@ -42,15 +45,15 @@ class App {
     });
 
     // 設定画面: クイズ開始
-    this._setupView.onStart((settings) => {
+    this._setupView.onStart(async (settings) => {
       this._currentSettings = settings;
       this._quizEngine.init(this._currentExamData, settings);
-      this._showCurrentQuestion();
+      await this._showCurrentQuestion();
       this._screenManager.showScreen('quiz');
     });
 
     // クイズ画面: 回答
-    this._quizView.onAnswer((index) => {
+    this._quizView.onAnswer(async (index) => {
       const result = this._quizEngine.submitAnswer(index);
 
       if (this._currentSettings.mode === 'one-by-one') {
@@ -71,13 +74,13 @@ class App {
           }
         } else {
           this._quizEngine.nextQuestion();
-          this._showCurrentQuestion();
+          await this._showCurrentQuestion();
         }
       }
     });
 
     // クイズ画面: 前の問題
-    this._quizView.onPrev(() => {
+    this._quizView.onPrev(async () => {
       const number = this._quizEngine.getQuestionNumber();
       if (number.current === 1) {
         if (this._win.confirm('TOPページに戻りますか？')) {
@@ -85,12 +88,12 @@ class App {
         }
       } else {
         this._quizEngine.prevQuestion();
-        this._showCurrentQuestion();
+        await this._showCurrentQuestion();
       }
     });
 
     // クイズ画面: 次の問題
-    this._quizView.onNext(() => {
+    this._quizView.onNext(async () => {
       const number = this._quizEngine.getQuestionNumber();
       if (number.current === number.total) {
         if (this._win.confirm('結果を表示しますか？')) {
@@ -98,7 +101,7 @@ class App {
         }
       } else {
         this._quizEngine.nextQuestion();
-        this._showCurrentQuestion();
+        await this._showCurrentQuestion();
       }
     });
 
@@ -108,11 +111,11 @@ class App {
     });
   }
 
-  _showCurrentQuestion() {
+  async _showCurrentQuestion() {
     const question = this._quizEngine.getCurrentQuestion();
     const number = this._quizEngine.getQuestionNumber();
     const answerState = this._quizEngine.getCurrentAnswer();
-    this._quizView.renderQuestion(question, number, answerState, this._currentSettings.mode);
+    await this._quizView.renderQuestion(question, number, answerState, this._currentSettings.mode);
   }
 
   _showResults() {
