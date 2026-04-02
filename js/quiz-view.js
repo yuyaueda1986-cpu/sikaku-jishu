@@ -9,6 +9,9 @@ class QuizView {
     this._copyHelper = null;
     this._markdownRenderer = null;
     this._dataLoader = null;
+    this._focusedIndex = -1;
+
+    this._initKeyboardHandler();
 
     // イベント委譲: sectionレベルで一度だけ登録
     this._section.addEventListener('click', (e) => {
@@ -36,6 +39,7 @@ class QuizView {
 
   async renderQuestion(question, number, answerState, mode) {
     this._answered = false;
+    this._focusedIndex = -1;
     this._mode = mode || 'one-by-one';
     this._currentQuestion = question;
 
@@ -56,7 +60,7 @@ class QuizView {
         </div>
         <div id="markdown-area" class="markdown-area"></div>
         ${figureHtml}
-        <ul class="choice-list${question.choices.length >= 8 ? ' choice-list--compact' : ''}">
+        <ul class="choice-list${question.choices.length >= 6 ? ' choice-list--two-col' : ''}${question.choices.length >= 8 ? ' choice-list--compact' : ''}">
           ${choiceItems}
         </ul>
         <div id="result-area"></div>
@@ -191,8 +195,14 @@ class QuizView {
     this._prevCallback = callback;
   }
 
-  _handleAnswer(index) {
+  _handleAnswer(index, fromKeyboard) {
     if (this._answered && this._mode === 'one-by-one') return;
+
+    // クリック経由の場合はキーボードフォーカスをリセット
+    if (!fromKeyboard) {
+      this._focusedIndex = -1;
+      this._updateFocus();
+    }
 
     // 選択状態をUIに反映
     const items = this._section.querySelectorAll('.choice-item');
@@ -228,6 +238,52 @@ class QuizView {
       feedback.textContent = success ? 'コピーしました' : 'コピーに失敗しました';
       feedback.classList.add('visible');
       setTimeout(() => feedback.classList.remove('visible'), 2000);
+    }
+  }
+
+  _initKeyboardHandler() {
+    document.addEventListener('keydown', (e) => this._handleKeyDown(e));
+  }
+
+  _handleKeyDown(e) {
+    if (!this._section.classList.contains('active')) return;
+
+    const items = this._section.querySelectorAll('.choice-item');
+    const count = items.length;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        if (count === 0) return;
+        this._focusedIndex = this._focusedIndex < count - 1 ? this._focusedIndex + 1 : 0;
+        this._updateFocus();
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        if (count === 0) return;
+        this._focusedIndex = this._focusedIndex > 0 ? this._focusedIndex - 1 : count - 1;
+        this._updateFocus();
+        break;
+      case ' ':
+        e.preventDefault();
+        if (this._focusedIndex >= 0) {
+          this._handleAnswer(this._focusedIndex, true);
+        }
+        break;
+      case 'ArrowLeft':
+        this._handlePrev();
+        break;
+      case 'ArrowRight':
+        this._handleNext();
+        break;
+    }
+  }
+
+  _updateFocus() {
+    const items = this._section.querySelectorAll('.choice-item');
+    items.forEach((item) => item.classList.remove('choice-item--focused'));
+    if (this._focusedIndex >= 0 && items[this._focusedIndex]) {
+      items[this._focusedIndex].classList.add('choice-item--focused');
     }
   }
 

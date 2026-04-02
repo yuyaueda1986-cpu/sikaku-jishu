@@ -79,7 +79,7 @@ new ScreenManager(document)
 ### CSS制御
 
 - `.screen` → `display: none`
-- `.screen.active` → `display: block`
+- `.screen.active` → `display: flex; flex-direction: column; min-height: calc(100vh - 32px)`（flexboxでスティッキーフッターを実現）
 
 ---
 
@@ -231,6 +231,30 @@ new QuizView(section)
 | `onAnswer(callback)` | `void` | 選択肢クリック時コールバック登録。引数: 選択インデックス |
 | `onNext(callback)` | `void` | 次ボタン押下時コールバック登録 |
 | `onPrev(callback)` | `void` | 前ボタン押下時コールバック登録 |
+
+### 選択肢レイアウト
+
+選択肢の個数に応じてレイアウトを自動調整する:
+
+| 選択肢数 | レイアウト |
+|---|---|
+| 1〜5個 | 1列表示（デフォルト） |
+| 6〜7個 | 2列グリッド表示（`choice-list--two-col`） |
+| 8個以上 | 2列グリッド表示 + コンパクトフォント（`choice-list--two-col choice-list--compact`） |
+
+### キーボードショートカット
+
+クイズ画面がアクティブな場合に以下のキーボード操作が有効になる:
+
+| キー | 動作 |
+|---|---|
+| `↑` | 選択肢フォーカスを1つ上に移動（先頭でラップ） |
+| `↓` | 選択肢フォーカスを1つ下に移動（末尾でラップ） |
+| `Space` | フォーカス中の選択肢を回答として確定 |
+| `←` | 前の問題へ移動 |
+| `→` | 次の問題へ移動 |
+
+フォーカス状態は `_focusedIndex` 内部プロパティで管理し、`choice-item--focused` CSSクラスで視覚的にハイライトする。問題の切り替え時にフォーカスはリセットされる。
 
 ### 回答状態の復元
 
